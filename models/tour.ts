@@ -2,8 +2,9 @@ import { ObjectId } from 'mongodb';
 
 // Declare document model
 export default interface Tour {
-  name: String;
-  rating: Number;
-  price: Number;
+  tour_id: number;
+  name: string;
+  rating: number;
+  price: number;
   id?: ObjectId;
 }

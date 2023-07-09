@@ -2,7 +2,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const tourRouter = require('./routes/tourRouter');
-const userRouter = require('./routes/userRouter');
+//const userRouter = require('./routes/userRouter');
 
 // Create a express server
 const app = express();
@@ -27,6 +27,6 @@ app.use((req, res, next) => {
 
 // Mounting API Routers
 app.use('/api/v1/tours', tourRouter);
-app.use('/api/v1/users', userRouter);
+//app.use('/api/v1/users', userRouter);
 
 module.exports = app;
