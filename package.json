@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/express-serve-static-core": "^4.17.35",
     "dotenv": "^16.3.1",
     "eslint": "^8.44.0",
     "express": "4",

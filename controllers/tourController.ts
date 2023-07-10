@@ -1,73 +1,98 @@
 import * as express from 'express';
 import { TourRequest } from '../models/customTypes';
 import Tour from '../models/tour';
-import { Error } from 'mongoose';
-import { ParsedUrlQueryInput } from 'querystring';
+import mongoose, { Error } from 'mongoose';
+import { Query } from 'express-serve-static-core';
 
 //const fs = require('fs');
+class APIFeaturesGET {
+  query: mongoose.Query<any, typeof Tour, {}>;
+  queryObj: Query;
 
-export async function getAllTours(req: TourRequest, res: express.Response) {
-  try {
-    console.log(req.query);
-    const queryObj = { ...req.query };
+  constructor(query: mongoose.Query<any, typeof Tour, {}>, queryObj: Query) {
+    this.query = query;
+    this.queryObj = queryObj;
+  }
+
+  Find() {
+    const queryObj = { ...this.queryObj };
+
     const excludedField = ['page', 'sort', 'limit', 'fields'];
     excludedField.forEach((el) => delete queryObj[el]);
 
-    // Build the query
-    let query = Tour.find(queryObj);
+    this.query = this.query.find(queryObj);
+    return this;
+  }
 
-    // Allow users to fetch sorted result.
-    if (req.query.sort) {
+  Sort() {
+    if (this.queryObj.sort) {
       let sortBy: string | string[] = '';
-      if (typeof req.query.sort === 'string') {
-        sortBy = req.query.sort as string;
-      } else if (typeof req.query.sort === 'object') {
-        const queryArr = req.query.sort as Array<string>;
+      if (typeof this.queryObj.sort === 'string') {
+        sortBy = this.queryObj.sort as string;
+      } else if (typeof this.queryObj.sort === 'object') {
+        const queryArr = this.queryObj.sort as Array<string>;
         sortBy = queryArr.join(' ');
       }
 
-      query = query.sort(sortBy);
+      console.log(sortBy);
+      this.query = this.query.sort(sortBy);
     }
 
+    return this;
+  }
+
+  Filter() {
     // Allow users to query selected fields of a document
-    if (req.query.fields) {
+    if (this.queryObj.fields) {
       let filterBy: string | string[] = '';
-      if (typeof req.query.fields === 'string') {
-        filterBy = req.query.fields as string;
-      } else if (typeof req.query.fields === 'object') {
-        const queryArr = req.query.fields as Array<string>;
+      if (typeof this.queryObj.fields === 'string') {
+        filterBy = this.queryObj.fields as string;
+      } else if (typeof this.queryObj.fields === 'object') {
+        const queryArr = this.queryObj.fields as Array<string>;
         filterBy = queryArr.join(' ');
       }
 
-      query = query.select(filterBy);
+      this.query = this.query.select(filterBy);
     }
+    return this;
+  }
 
-    // Paginization
+  Paginization() {
     /// .skip() to skip the specified number of record and
     /// .limit() to limit the number of result returned in one query.
     /// The default page number is 1, ie. the first page
     /// And will be set to the valid number user provided.
     let pageNumber: number | undefined = 1;
-    if (typeof req.query.page === 'string') {
-      pageNumber = parseInt(req.query.page) || 1;
+    if (typeof this.queryObj.page === 'string') {
+      pageNumber = parseInt(this.queryObj.page) || 1;
     }
 
     let limit: number | undefined = 20;
-    if (typeof req.query.limit === 'string') {
-      limit = parseInt(req.query.limit) || 20;
+    if (typeof this.queryObj.limit === 'string') {
+      limit = parseInt(this.queryObj.limit) || 20;
     }
 
     // if the page number provided is bigger than the actual number of pages there are.
     // An error is thrown.
     const skip: number = (pageNumber - 1) * limit;
-    if (skip >= (await Tour.countDocuments())) {
-      throw new Error('Page not found.');
-    }
 
-    query = query.skip((pageNumber - 1) * limit).limit(limit);
+    this.query = this.query.skip(skip).limit(limit);
+
+    return this;
+  }
+}
+
+export async function getAllTours(req: TourRequest, res: express.Response) {
+  try {
+    console.log(req.query);
+
+    const getFeatures = new APIFeaturesGET(Tour.find(), req.query);
+
+    // Build the query
+    getFeatures.Find().Sort().Filter().Paginization();
 
     // execute the query
-    const tours = await query;
+    const tours = await getFeatures.query;
     res.status(200).send({
       status: 'success',
       time: req.timeofRequest,
