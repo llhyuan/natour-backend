@@ -4,6 +4,7 @@ import {
   getTourById,
   modifyTour,
   deleteTour,
+  topFiveQuery,
 } from '../controllers/tourController';
 
 const express = require('express');
@@ -11,7 +12,12 @@ const express = require('express');
 const tourRouter = express.Router();
 
 tourRouter.route('/').get(getAllTours).post(createNewTour);
+tourRouter.route('/top5').get(topFiveQuery, getAllTours);
 
-tourRouter.route('/:id').get(getTourById).patch(modifyTour).delete(deleteTour);
+tourRouter
+  .route('/details/:id')
+  .get(getTourById)
+  .patch(modifyTour)
+  .delete(deleteTour);
 
 export default tourRouter;

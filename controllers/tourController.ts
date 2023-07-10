@@ -1,11 +1,14 @@
 import * as express from 'express';
 import { TourRequest } from '../models/customTypes';
 import Tour from '../models/tour';
+import { Error } from 'mongoose';
+import { ParsedUrlQueryInput } from 'querystring';
 
 //const fs = require('fs');
 
 export async function getAllTours(req: TourRequest, res: express.Response) {
   try {
+    console.log(req.query);
     const queryObj = { ...req.query };
     const excludedField = ['page', 'sort', 'limit', 'fields'];
     excludedField.forEach((el) => delete queryObj[el]);
@@ -13,8 +16,9 @@ export async function getAllTours(req: TourRequest, res: express.Response) {
     // Build the query
     let query = Tour.find(queryObj);
 
-    let sortBy: string | string[] = '';
+    // Allow users to fetch sorted result.
     if (req.query.sort) {
+      let sortBy: string | string[] = '';
       if (typeof req.query.sort === 'string') {
         sortBy = req.query.sort as string;
       } else if (typeof req.query.sort === 'object') {
@@ -25,10 +29,47 @@ export async function getAllTours(req: TourRequest, res: express.Response) {
       query = query.sort(sortBy);
     }
 
+    // Allow users to query selected fields of a document
+    if (req.query.fields) {
+      let filterBy: string | string[] = '';
+      if (typeof req.query.fields === 'string') {
+        filterBy = req.query.fields as string;
+      } else if (typeof req.query.fields === 'object') {
+        const queryArr = req.query.fields as Array<string>;
+        filterBy = queryArr.join(' ');
+      }
+
+      query = query.select(filterBy);
+    }
+
+    // Paginization
+    /// .skip() to skip the specified number of record and
+    /// .limit() to limit the number of result returned in one query.
+    /// The default page number is 1, ie. the first page
+    /// And will be set to the valid number user provided.
+    let pageNumber: number | undefined = 1;
+    if (typeof req.query.page === 'string') {
+      pageNumber = parseInt(req.query.page) || 1;
+    }
+
+    let limit: number | undefined = 20;
+    if (typeof req.query.limit === 'string') {
+      limit = parseInt(req.query.limit) || 20;
+    }
+
+    // if the page number provided is bigger than the actual number of pages there are.
+    // An error is thrown.
+    const skip: number = (pageNumber - 1) * limit;
+    if (skip >= (await Tour.countDocuments())) {
+      throw new Error('Page not found.');
+    }
+
+    query = query.skip((pageNumber - 1) * limit).limit(limit);
+
     // execute the query
     const tours = await query;
     res.status(200).send({
-      status: 'succesy',
+      status: 'success',
       time: req.timeofRequest,
       result: tours?.length,
       data: {
@@ -36,9 +77,10 @@ export async function getAllTours(req: TourRequest, res: express.Response) {
       },
     });
   } catch (err) {
+    let Err: Error = err as Error;
     res.status(404).json({
       status: 'Failed',
-      message: err,
+      message: Err.toString(),
     });
   }
 }
@@ -134,4 +176,24 @@ export async function deleteTour(req: TourRequest, res: express.Response) {
       message: err,
     });
   }
+}
+
+export function topFiveQuery(
+  req: TourRequest,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  req.query.sort = ['price', '-ratingsAverage'];
+  req.query.fields = [
+    'name',
+    'duration',
+    'difficulty',
+    'ratingsAverage',
+    'price',
+  ];
+  req.query.page = '1';
+  req.query.limit = '5';
+  console.log('From top 5 query middleware.');
+
+  next();
 }
