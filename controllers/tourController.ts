@@ -10,10 +10,25 @@ export async function getAllTours(req: TourRequest, res: express.Response) {
     const excludedField = ['page', 'sort', 'limit', 'fields'];
     excludedField.forEach((el) => delete queryObj[el]);
 
-    const tours = await Tour.find(queryObj);
+    // Build the query
+    let query = Tour.find(queryObj);
 
+    let sortBy: string | string[] = '';
+    if (req.query.sort) {
+      if (typeof req.query.sort === 'string') {
+        sortBy = req.query.sort as string;
+      } else if (typeof req.query.sort === 'object') {
+        const queryArr = req.query.sort as Array<string>;
+        sortBy = queryArr.join(' ');
+      }
+
+      query = query.sort(sortBy);
+    }
+
+    // execute the query
+    const tours = await query;
     res.status(200).send({
-      status: 'success',
+      status: 'succesy',
       time: req.timeofRequest,
       result: tours?.length,
       data: {
