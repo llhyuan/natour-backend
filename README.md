@@ -1,1 +1,1 @@
-### My first bakcend application (MongoDB, Express and TypeScript)
+### Touring company bakcend application (MongoDB, Express and TypeScript)
