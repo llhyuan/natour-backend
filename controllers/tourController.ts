@@ -4,14 +4,11 @@ import Tour from '../models/tour';
 
 //const fs = require('fs');
 
-exports.getAllTours = async (req: TourRequest, res: express.Response) => {
-  console.log(req.timeofRequest);
-
+export async function getAllTours(req: TourRequest, res: express.Response) {
   try {
     const queryObj = { ...req.query };
     const excludedField = ['page', 'sort', 'limit', 'fields'];
     excludedField.forEach((el) => delete queryObj[el]);
-    console.log(req.query, queryObj);
 
     const tours = await Tour.find(queryObj);
 
@@ -29,9 +26,9 @@ exports.getAllTours = async (req: TourRequest, res: express.Response) => {
       message: err,
     });
   }
-};
+}
 
-exports.getTourById = async (req: TourRequest, res: express.Response) => {
+export async function getTourById(req: TourRequest, res: express.Response) {
   const id = parseInt(req.params.id);
 
   try {
@@ -56,9 +53,9 @@ exports.getTourById = async (req: TourRequest, res: express.Response) => {
       message: err,
     });
   }
-};
+}
 
-exports.createNewTour = async (req: TourRequest, res: express.Response) => {
+export async function createNewTour(req: TourRequest, res: express.Response) {
   try {
     const newTour = await Tour.create(req.body);
 
@@ -74,9 +71,9 @@ exports.createNewTour = async (req: TourRequest, res: express.Response) => {
       message: err,
     });
   }
-};
+}
 
-exports.modifyTour = async (req: TourRequest, res: express.Response) => {
+export async function modifyTour(req: TourRequest, res: express.Response) {
   const id = parseInt(req.params.id);
 
   try {
@@ -102,9 +99,9 @@ exports.modifyTour = async (req: TourRequest, res: express.Response) => {
   }
 
   // modify functioin to be implemented
-};
+}
 
-exports.deleteTour = async (req: TourRequest, res: express.Response) => {
+export async function deleteTour(req: TourRequest, res: express.Response) {
   const id = parseInt(req.params.id);
   console.log(id);
 
@@ -122,4 +119,4 @@ exports.deleteTour = async (req: TourRequest, res: express.Response) => {
       message: err,
     });
   }
-};
+}

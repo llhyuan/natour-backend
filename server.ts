@@ -1,6 +1,5 @@
 import connectToDatabase from './services/database.service';
-
-const app = require('./app');
+import app from './app';
 
 async function run(): Promise<void> {
   // Connecting to the database
