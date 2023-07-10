@@ -1,5 +1,5 @@
 //import { ObjectId } from 'mongodb';
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 // Declare document model
 // export default interface Tour {
@@ -11,7 +11,6 @@ import mongoose from 'mongoose';
 // }
 
 const tourSchema = new mongoose.Schema({
-  id: { type: Number, required: true, unique: true },
   name: {
     type: String,
     required: [true, 'A tour must have a name'],
@@ -36,7 +35,7 @@ const tourSchema = new mongoose.Schema({
     required: [true, 'Give your tour a description'],
     trim: true,
   },
-  imgCover: {
+  imageCover: {
     type: String,
     required: [true, 'A cover image would help attract more customers'],
   },
@@ -49,4 +48,4 @@ const tourSchema = new mongoose.Schema({
 
 const Tour = mongoose.model('Tour', tourSchema);
 
-export default Tour;
+module.exports = Tour;

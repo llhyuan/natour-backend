@@ -1,15 +1,10 @@
-import { collections, connectToDatabase } from './services/database.service';
+import connectToDatabase from './services/database.service';
 
 const app = require('./app');
 
 async function run(): Promise<void> {
   // Connecting to the database
   await connectToDatabase();
-
-  const collection = collections.tour;
-  if (!collection) {
-    return console.log('No collection found in the database.');
-  }
 }
 run().catch(console.dir);
 
