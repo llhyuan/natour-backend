@@ -2,85 +2,7 @@ import * as express from 'express';
 import { TourRequest } from '../models/customTypes';
 import Tour from '../models/tour';
 import mongoose, { Error } from 'mongoose';
-import { Query } from 'express-serve-static-core';
-
-//const fs = require('fs');
-class APIFeaturesGET {
-  query: mongoose.Query<any, typeof Tour, {}>;
-  queryObj: Query;
-
-  constructor(query: mongoose.Query<any, typeof Tour, {}>, queryObj: Query) {
-    this.query = query;
-    this.queryObj = queryObj;
-  }
-
-  Find() {
-    const queryObj = { ...this.queryObj };
-
-    const excludedField = ['page', 'sort', 'limit', 'fields'];
-    excludedField.forEach((el) => delete queryObj[el]);
-
-    this.query = this.query.find(queryObj);
-    return this;
-  }
-
-  Sort() {
-    if (this.queryObj.sort) {
-      let sortBy: string | string[] = '';
-      if (typeof this.queryObj.sort === 'string') {
-        sortBy = this.queryObj.sort as string;
-      } else if (typeof this.queryObj.sort === 'object') {
-        const queryArr = this.queryObj.sort as Array<string>;
-        sortBy = queryArr.join(' ');
-      }
-
-      console.log(sortBy);
-      this.query = this.query.sort(sortBy);
-    }
-
-    return this;
-  }
-
-  Filter() {
-    // Allow users to query selected fields of a document
-    if (this.queryObj.fields) {
-      let filterBy: string | string[] = '';
-      if (typeof this.queryObj.fields === 'string') {
-        filterBy = this.queryObj.fields as string;
-      } else if (typeof this.queryObj.fields === 'object') {
-        const queryArr = this.queryObj.fields as Array<string>;
-        filterBy = queryArr.join(' ');
-      }
-
-      this.query = this.query.select(filterBy);
-    }
-    return this;
-  }
-
-  Paginization() {
-    /// .skip() to skip the specified number of record and
-    /// .limit() to limit the number of result returned in one query.
-    /// The default page number is 1, ie. the first page
-    /// And will be set to the valid number user provided.
-    let pageNumber: number | undefined = 1;
-    if (typeof this.queryObj.page === 'string') {
-      pageNumber = parseInt(this.queryObj.page) || 1;
-    }
-
-    let limit: number | undefined = 20;
-    if (typeof this.queryObj.limit === 'string') {
-      limit = parseInt(this.queryObj.limit) || 20;
-    }
-
-    // if the page number provided is bigger than the actual number of pages there are.
-    // An error is thrown.
-    const skip: number = (pageNumber - 1) * limit;
-
-    this.query = this.query.skip(skip).limit(limit);
-
-    return this;
-  }
-}
+import APIFeaturesGET from '../utils/apiFeaturesGET';
 
 export async function getAllTours(req: TourRequest, res: express.Response) {
   try {
@@ -89,7 +11,7 @@ export async function getAllTours(req: TourRequest, res: express.Response) {
     const getFeatures = new APIFeaturesGET(Tour.find(), req.query);
 
     // Build the query
-    getFeatures.Find().Sort().Filter().Paginization();
+    getFeatures.find().sort().filter().paginization();
 
     // execute the query
     const tours = await getFeatures.query;
@@ -221,4 +143,98 @@ export function topFiveQuery(
   console.log('From top 5 query middleware.');
 
   next();
+}
+
+export async function getTourStats(req: TourRequest, res: express.Response) {
+  try {
+    const stats = await Tour.aggregate([
+      {
+        $match: { ratingsAverage: { $gte: 4.5 } },
+      },
+      {
+        $group: {
+          _id: '$difficulty',
+          numTours: { $sum: 1 },
+          numRatings: { $sum: '$ratingsQuantity' },
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' },
+        },
+      },
+      {
+        $sort: {
+          avgPrice: -1,
+        },
+      },
+    ]);
+    res.status(200).json({
+      status: 'success',
+      data: {
+        stats,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'fail',
+      message: err,
+    });
+  }
+}
+
+export async function getMonthlyData(req: TourRequest, res: express.Response) {
+  let year: number = parseInt(req.params.year);
+  if (isNaN(year)) {
+    const thisYear = new Date();
+    year = thisYear.getFullYear();
+  }
+
+  try {
+    const plan = await Tour.aggregate([
+      {
+        $unwind: '$startDates',
+      },
+      {
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: '$startDates' },
+          numTours: { $sum: 1 },
+          tours: { $push: '$name' },
+        },
+      },
+      {
+        $addFields: {
+          month: '$_id',
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+        },
+      },
+      {
+        $sort: {
+          numTours: -1,
+        },
+      },
+    ]);
+    res.status(200).json({
+      status: 'success',
+      data: {
+        tour: plan,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'fail',
+      message: err,
+    });
+  }
 }

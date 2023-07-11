@@ -24,6 +24,8 @@ const tourSchema = new mongoose.Schema({
   },
   difficulty: { type: String, required: [true, 'Difficulty must be provided'] },
   ratingsAverage: { type: Number, required: false, default: null },
+  ratingsQuantity: { type: Number, required: false, default: 0 },
+  startDates: { type: [Date], required: false, default: [] },
   price: { type: Number, required: [true, 'A tour must have a price'] },
   priceDiscount: Number,
   summary: {
