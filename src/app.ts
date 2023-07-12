@@ -1,7 +1,8 @@
 // Imports
 import tourRouter from './routes/tourRouter';
-import { TourRequest } from './models/customTypes';
-import { Response, NextFunction } from 'express';
+import { TourRequest, AppError } from './models/customTypes';
+import { Response, NextFunction } from 'express-serve-static-core';
+import errorHandler from './controllers/errorController';
 //const userRouter = require('./routes/userRouter');
 
 const morgan = require('morgan');
@@ -32,11 +33,15 @@ app.use('/api/v1/tours', tourRouter);
 //app.use('/api/v1/users', userRouter);
 
 // Handle all other undefined routes
-app.all('*', (req: TourRequest, res: Response, next: NextFunction) => {
-  res.status(404).json({
-    status: 'fail',
-    message: `Cannot find the requested url: ${req.originalUrl}`,
-  });
+app.all('*', (req: TourRequest, _res: Response, next: NextFunction) => {
+  const err = new AppError(
+    `Cannot find the requested url: ${req.originalUrl}`,
+    404
+  );
+
+  next(err);
 });
+
+app.use(errorHandler);
 
 export default app;
