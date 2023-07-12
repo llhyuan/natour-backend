@@ -2,15 +2,15 @@
   "name": "natour",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/main.js",
   "scripts": {
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
     "build": "tsc",
     "prestart": "pnpm run build",
     "start": "node .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.ts",
-    "prod": "NODE_ENV=production nodemon index.ts"
+    "dev": "nodemon main.ts",
+    "prod": "NODE_ENV=production nodemon main.ts"
   },
   "keywords": [],
   "author": "",

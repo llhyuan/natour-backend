@@ -31,4 +31,12 @@ app.use((req: TourRequest, _res: Response, next: NextFunction) => {
 app.use('/api/v1/tours', tourRouter);
 //app.use('/api/v1/users', userRouter);
 
+// Handle all other undefined routes
+app.all('*', (req: TourRequest, res: Response, next: NextFunction) => {
+  res.status(404).json({
+    status: 'fail',
+    message: `Cannot find the requested url: ${req.originalUrl}`,
+  });
+});
+
 export default app;
