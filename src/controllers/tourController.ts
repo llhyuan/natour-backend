@@ -1,4 +1,4 @@
-import { TourRequest } from '../models/customTypes';
+import { TourRequest, AppError } from '../models/customTypes';
 import Tour from '../models/tour';
 import { Error } from 'mongoose';
 import APIFeaturesGET from '../utils/apiFeaturesGET';
@@ -39,8 +39,8 @@ async function _getTourById(
   const result = await Tour.findOne({ _id: id });
 
   if (!result) {
-    const err = new Error('Cannot found the queried tour.');
-    throw err;
+    const err = new AppError('Cannot found the queried tour.', 404);
+    next(err);
   }
 
   res.status(200).json({
@@ -83,7 +83,8 @@ async function _modifyTour(
   });
 
   if (!modifiedTour) {
-    throw new Error('Cannot update. try again later.');
+    const err = new AppError('Cannot update. try again later.', 500);
+    next(err);
   }
 
   res.status(202).json({
@@ -103,7 +104,12 @@ async function _deleteTour(
 ) {
   const id = req.params.id;
 
-  await Tour.findOneAndDelete({ _id: id });
+  const deletedDoc = await Tour.findOneAndDelete({ _id: id });
+
+  if (!deletedDoc) {
+    const err = new AppError('Cannot find the tour to be deleted.', 404);
+    next(err);
+  }
 
   // Successful delete operaton does not return anything.
   res.status(204).json({
