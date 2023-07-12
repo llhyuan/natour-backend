@@ -6,8 +6,6 @@ import APIFeaturesGET from '../utils/apiFeaturesGET';
 
 export async function getAllTours(req: TourRequest, res: express.Response) {
   try {
-    console.log(req.query);
-
     const getFeatures = new APIFeaturesGET(Tour.find(), req.query);
 
     // Build the query
@@ -33,10 +31,10 @@ export async function getAllTours(req: TourRequest, res: express.Response) {
 }
 
 export async function getTourById(req: TourRequest, res: express.Response) {
-  const id = parseInt(req.params.id);
+  const id = req.params.id;
 
   try {
-    const result = await Tour.findOne({ id: id });
+    const result = await Tour.findOne({ _id: id });
 
     if (!result) {
       return res.status(404).json({
@@ -78,11 +76,12 @@ export async function createNewTour(req: TourRequest, res: express.Response) {
 }
 
 export async function modifyTour(req: TourRequest, res: express.Response) {
-  const id = parseInt(req.params.id);
+  const id = req.params.id;
 
   try {
-    const modifiedTour = await Tour.findOneAndUpdate({ id: id }, req.body, {
+    const modifiedTour = await Tour.findOneAndUpdate({ _id: id }, req.body, {
       new: true,
+      runValidators: true,
     });
 
     if (!modifiedTour) {
@@ -106,11 +105,10 @@ export async function modifyTour(req: TourRequest, res: express.Response) {
 }
 
 export async function deleteTour(req: TourRequest, res: express.Response) {
-  const id = parseInt(req.params.id);
-  console.log(id);
+  const id = req.params.id;
 
   try {
-    await Tour.findOneAndDelete({ id: id });
+    await Tour.findOneAndDelete({ _id: id });
 
     // Successful delete operaton does not return anything.
     res.status(204).json({
@@ -217,11 +215,6 @@ export async function getMonthlyData(req: TourRequest, res: express.Response) {
       {
         $project: {
           _id: 0,
-        },
-      },
-      {
-        $sort: {
-          numTours: -1,
         },
       },
     ]);

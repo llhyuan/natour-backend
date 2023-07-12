@@ -2,11 +2,15 @@
   "name": "natour",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
+    "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
+    "build": "tsc",
+    "prestart": "pnpm run build",
+    "start": "node .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.ts",
-    "prod": "NODE_ENV=production nodemon server.js"
+    "dev": "nodemon index.ts",
+    "prod": "NODE_ENV=production nodemon index.ts"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +29,7 @@
     "@types/node": "^20.4.1",
     "mongodb": "^5.6.0",
     "nodemon": "^2.0.22",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0"
   }
 }

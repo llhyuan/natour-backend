@@ -17,12 +17,12 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json());
 app.use(express.static('./public'));
 
-app.use((req: TourRequest, res: Response, next: NextFunction) => {
+app.use((_req: TourRequest, _res: Response, next: NextFunction) => {
   console.log('Hello from the middleware.');
   next();
 });
 
-app.use((req: TourRequest, res: Response, next: NextFunction) => {
+app.use((req: TourRequest, _res: Response, next: NextFunction) => {
   req.timeofRequest = new Date().toUTCString();
   next();
 });
