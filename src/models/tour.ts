@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 
 const tourSchema = new mongoose.Schema(
   {
-    id: { type: Number, required: true, unique: true },
+    id: { type: String, required: true, unique: true },
     name: {
       type: String,
       required: [true, 'A tour must have a name'],
@@ -72,7 +72,7 @@ const tourSchema = new mongoose.Schema(
       trim: true,
       maxLength: [500, 'The description should be within 500 characters'],
     },
-    imgCover: {
+    imageCover: {
       type: String,
       required: [true, 'A cover image would help attract more customers'],
     },

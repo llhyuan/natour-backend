@@ -1,7 +1,7 @@
 // Imports
 import tourRouter from './routes/tourRouter';
 import { TourRequest, AppError } from './models/customTypes';
-import { Response, NextFunction } from 'express-serve-static-core';
+import { Response, NextFunction, Application } from 'express-serve-static-core';
 import errorHandler from './controllers/errorController';
 //const userRouter = require('./routes/userRouter');
 
@@ -17,11 +17,6 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(express.json());
 app.use(express.static('./public'));
-
-app.use((_req: TourRequest, _res: Response, next: NextFunction) => {
-  console.log('Hello from the middleware.');
-  next();
-});
 
 app.use((req: TourRequest, _res: Response, next: NextFunction) => {
   req.timeofRequest = new Date().toUTCString();

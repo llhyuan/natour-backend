@@ -8,7 +8,6 @@ export default async function connectToDatabase() {
     ? process.env.DB_CONN_STRING
     : '';
 
-  console.log(uri);
   await mongoose.connect(uri);
   console.log('connected to the database.');
 }
