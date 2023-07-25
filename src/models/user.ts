@@ -28,6 +28,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please confirm a password'],
     minLength: 8,
+    validate: {
+      validator: function (el: string) {
+        return el === this['password'];
+      },
+      message: 'Passwords are not the same.',
+    },
   },
 });
 
