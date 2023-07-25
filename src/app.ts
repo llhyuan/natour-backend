@@ -1,9 +1,9 @@
 // Imports
 import tourRouter from './routes/tourRouter';
 import { TourRequest, AppError } from './models/customTypes';
-import { Response, NextFunction, Application } from 'express-serve-static-core';
+import { Response, NextFunction } from 'express-serve-static-core';
 import errorHandler from './controllers/errorController';
-//const userRouter = require('./routes/userRouter');
+import userRouter from './routes/userRouter';
 
 const morgan = require('morgan');
 const express = require('express');
@@ -25,7 +25,7 @@ app.use((req: TourRequest, _res: Response, next: NextFunction) => {
 
 // Mounting API Routers
 app.use('/api/v1/tours', tourRouter);
-//app.use('/api/v1/users', userRouter);
+app.use('/api/v1/users', userRouter);
 
 // Handle all other undefined routes
 app.all('*', (req: TourRequest, _res: Response, next: NextFunction) => {

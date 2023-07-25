@@ -1,6 +1,5 @@
 import { TourRequest, AppError } from '../models/customTypes';
 import Tour from '../models/tour';
-import { Error } from 'mongoose';
 import APIFeaturesGET from '../utils/apiFeaturesGET';
 import { Response, NextFunction } from 'express-serve-static-core';
 import catchAsync from '../utils/catchAsync';
@@ -8,7 +7,7 @@ import catchAsync from '../utils/catchAsync';
 async function _getAllTours(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   const getFeatures = new APIFeaturesGET(Tour.find(), req.query);
 
@@ -56,7 +55,7 @@ export const getTourById = catchAsync(_getTourById);
 async function _createNewTour(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   const newTour = await Tour.create(req.body);
 
@@ -122,7 +121,7 @@ export const deleteTour = catchAsync(_deleteTour);
 
 export function topFiveQuery(
   req: TourRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) {
   req.query.sort = ['price', '-ratingsAverage'];
@@ -141,9 +140,9 @@ export function topFiveQuery(
 }
 
 async function _getTourStats(
-  req: TourRequest,
+  _req: TourRequest,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   const stats = await Tour.aggregate([
     {
@@ -179,7 +178,7 @@ export const getTourStats = catchAsync(_getTourStats);
 async function _getMonthlyData(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   let year: number = parseInt(req.params.year);
   if (isNaN(year)) {
