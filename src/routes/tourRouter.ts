@@ -8,7 +8,10 @@ import {
   getTourStats,
   getMonthlyData,
 } from '../controllers/tourController';
-import { verifyLoginStatus } from '../controllers/authController';
+import {
+  verifyLoginStatus,
+  restrictUserRoleTo,
+} from '../controllers/authController';
 
 const express = require('express');
 // Routers
@@ -21,8 +24,16 @@ tourRouter.route('/monthly-data/:year?').get(verifyLoginStatus, getMonthlyData);
 tourRouter
   .route('/details/:id')
   .get(getTourById)
-  .patch(modifyTour)
-  .delete(deleteTour);
+  .patch(
+    verifyLoginStatus,
+    restrictUserRoleTo('admin', 'lead-guide'),
+    modifyTour
+  )
+  .delete(
+    verifyLoginStatus,
+    restrictUserRoleTo('admin', 'lead-guide'),
+    deleteTour
+  );
 
 tourRouter.route('/').get(getAllTours).post(createNewTour);
 
