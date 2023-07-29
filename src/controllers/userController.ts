@@ -1,10 +1,4 @@
 // to be implemented
-export async function getAllUsers(req, res) {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route has not been defined.',
-  });
-}
 
 export async function createUser(req, res) {
   res.status(500).json({

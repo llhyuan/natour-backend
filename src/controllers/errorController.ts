@@ -22,6 +22,9 @@ export default function ErrorHandle(
     if (err.name === 'ValidationError') {
       err = handleValidationError(err);
     }
+    if (err.name === 'JsonWebTokenError') {
+      err = handleInvalidTokenError();
+    }
     sendProdError(err, res);
   }
 }
@@ -67,4 +70,11 @@ function handleDuplicateKey(err: AppError) {
 
 function handleValidationError(err: AppError) {
   return new AppError(err.message, 400);
+}
+
+function handleInvalidTokenError() {
+  return new AppError(
+    'Login credentials not verified. Please login again to gain access.',
+    401
+  );
 }

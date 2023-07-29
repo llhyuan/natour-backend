@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
-import { isEmail } from 'validator';
+import validator from 'validator';
+import bcrypt from 'bcrypt';
+import { error } from 'console';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -12,8 +14,9 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Place provide an email address'],
     unique: true,
     maxLength: 40,
-    validate: [isEmail, 'Please provide a valid email address'],
+    validate: [validator.isEmail, 'Please provide a valid email address'],
     lowercase: true,
+    select: false,
   },
   photo: {
     type: String,
@@ -32,9 +35,31 @@ const userSchema = new mongoose.Schema({
       validator: function (el: string) {
         return el === this['password'];
       },
-      message: 'Passwords are not the same.',
+      message: 'The two passwords do not match.',
     },
+    select: false,
   },
+  passwordLastChanged: Date,
+});
+
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  if (this.password === undefined) {
+    const err = new error('Password is undefind.');
+    return next(err);
+  }
+
+  this.password = await bcrypt.hash(this.password, 12);
+
+  // validate() and its pre and post hooks are called before any pre("save") hooks.
+  // By the time when this middleware runs,
+  // Data validation has already been done - the two passwords are the same.
+  // Thus, it's safe to get rid of the passwordConfirm field.
+  this.passwordConfirm = undefined;
+  next();
 });
 
 const User = mongoose.model('User', userSchema);

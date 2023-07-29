@@ -1,18 +1,12 @@
-import {
-  getAllUsers,
-  createUser,
-  getUser,
-  updateUser,
-  deleteUser,
-} from '../controllers/userController';
-import { signup } from '../controllers/authController';
+import { getUser, updateUser, deleteUser } from '../controllers/userController';
+import { signup, login } from '../controllers/authController';
 
 const express = require('express');
 const userRouter = express.Router();
 
-userRouter.route('/signup').post(signup);
+userRouter.post('/signup', signup);
 
-userRouter.route('/').get(getAllUsers).post(createUser);
+userRouter.route('/login').post(login);
 
 userRouter.route('/:id').get(getUser).patch(updateUser).delete(deleteUser);
 

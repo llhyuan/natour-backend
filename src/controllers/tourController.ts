@@ -134,7 +134,6 @@ export function topFiveQuery(
   ];
   req.query.page = '1';
   req.query.limit = '5';
-  console.log('From top 5 query middleware.');
 
   next();
 }

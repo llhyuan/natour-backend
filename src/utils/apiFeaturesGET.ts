@@ -34,7 +34,6 @@ export default class APIFeaturesGET {
         sortBy = queryArr.join(' ');
       }
 
-      console.log(sortBy);
       this.query = this.query.sort(sortBy);
     }
 
