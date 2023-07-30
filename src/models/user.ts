@@ -16,7 +16,6 @@ const userSchema = new mongoose.Schema({
     maxLength: 40,
     validate: [validator.isEmail, 'Please provide a valid email address'],
     lowercase: true,
-    select: false,
   },
   photo: {
     type: String,

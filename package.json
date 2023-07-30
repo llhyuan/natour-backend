@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@emailjs/nodejs": "^2.2.0",
     "@types/bcrypt": "^5.0.0",
     "@types/express-serve-static-core": "^4.17.35",
     "@types/jsonwebtoken": "^9.0.2",

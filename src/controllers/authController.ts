@@ -4,6 +4,7 @@ import catchAsync from '../utils/catchAsync';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import emailjs from '@emailjs/nodejs';
 import { AppError } from '../models/customTypes';
 
 // Create a new user profile for the user.
@@ -46,7 +47,6 @@ async function _login(req: Request, res: Response, next: NextFunction) {
   }
 
   const user = await User.findOne({ email: email });
-  console.log(user);
 
   if (
     !user ||
@@ -170,17 +170,95 @@ async function _forgotPassword(
     .digest('hex');
   user.resetTokenGenerateTime = Date.now() + 10 * 60 * 1000; // resert token will only be valid for 10 minutes.
 
-  await user.save();
+  await user.save({ validateBeforeSave: false });
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      data: user,
-      message: 'Password reset token sent.',
-    },
-  });
+  // Create an url that includes this random token,
+  // And send it to the user to reset the password.
+  const resetUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/reset-password/${resetToken}`;
+
+  const emailTemplateParams = {
+    user_name: user.name,
+    reset_url: resetUrl,
+    user_email: user.email,
+  };
+
+  const pubkey = process.env.MAIL_PUBKEY ?? '';
+  const prikey = process.env.MAIL_PRIKEY ?? '';
+
+  emailjs
+    .send('service_x8z98ne', 'reset_password', emailTemplateParams, {
+      publicKey: pubkey,
+      privateKey: prikey,
+    })
+    .then(
+      () => {
+        res.status(200).json({
+          status: 'success',
+          message: 'Password reset token sent.',
+        });
+      },
+      () => {
+        user.passwordResetToken = undefined;
+        user.passwordLastChanged = undefined;
+
+        user.save({ validateBeforeSave: false });
+
+        return next(
+          new AppError(
+            'There has been an error sending reset link to your email. Try again later.',
+            500
+          )
+        );
+      }
+    );
 }
 
 export const forgotPassword = catchAsync(_forgotPassword);
 
 // Reset the user's password.
+async function _resetPassword(req: Request, res: Response, next: NextFunction) {
+  const resetToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+  const user = await User.findOne({
+    passwordResetToken: resetToken,
+    resetTokenGenerateTime: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new AppError('The link is invalid or has expired.', 500));
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.resetTokenGenerateTime = undefined;
+  user.passwordResetToken = undefined;
+  user.passwordLastChanged = new Date();
+
+  await user.save();
+
+  // Generate a new token to be used to verify the user's login status.
+  const secret = process.env.SECRET;
+
+  if (secret === undefined) {
+    throw Error('Authentication secret missing.');
+  }
+
+  const payload = { id: user._id };
+  const authToken = jwt.sign(payload, secret, {
+    expiresIn: process.env.JWT_EXP,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password has been updated.',
+    data: {
+      token: authToken,
+    },
+  });
+}
+
+export const resetPassword = catchAsync(_resetPassword);
