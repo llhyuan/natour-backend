@@ -1,4 +1,9 @@
-import { Request, Response, NextFunction } from 'express-serve-static-core';
+import {
+  Request,
+  Response,
+  NextFunction,
+  CookieOptions,
+} from 'express-serve-static-core';
 import User from '../models/user';
 import catchAsync from '../utils/catchAsync';
 import jwt from 'jsonwebtoken';
@@ -19,12 +24,28 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
   });
 
   const token = generateLoginToken(newUser._id);
+  const cookieOptions: CookieOptions = {
+    httpOnly: true,
+    maxAge: 10 * 24 * 60 * 60 * 1000,
+  };
+
+  if (process.env.NODE_ENV !== 'development') {
+    cookieOptions.secure = true;
+  }
+
+  // Send the token using cookie
+  // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
+  // And will only be accessible by the web server (sercure option)
+  res.cookie('jwt', token, cookieOptions);
+
+  // Hide these two fields from the user
+  // .save() is not called, so these changes will not be committed to database.
+  newUser.password = undefined;
 
   res.status(201).json({
     status: 'success',
     data: {
       user: newUser,
-      token: token,
     },
   });
 }
@@ -41,7 +62,6 @@ async function _login(req: Request, res: Response, next: NextFunction) {
   }
 
   const user = await User.findOne({ email: email }).select('+password');
-  console.log(user);
 
   if (
     !user ||
