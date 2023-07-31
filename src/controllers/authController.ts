@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import emailjs from '@emailjs/nodejs';
 import { AppError } from '../models/customTypes';
+import mongoose from 'mongoose';
 
 // Create a new user profile for the user.
 async function _signup(req: Request, res: Response, _next: NextFunction) {
@@ -17,14 +18,7 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
     passwordLastChanged: new Date(),
   });
 
-  const secret: jwt.Secret | undefined = process.env.SECRET;
-
-  if (secret === undefined) {
-    throw Error('Authentication secret missing.');
-  }
-
-  const payload = { id: newUser._id };
-  const token = jwt.sign(payload, secret, { expiresIn: process.env.JWT_EXP });
+  const token = generateLoginToken(newUser._id);
 
   res.status(201).json({
     status: 'success',
@@ -46,7 +40,8 @@ async function _login(req: Request, res: Response, next: NextFunction) {
     next(new AppError('Please provide email and password!', 400));
   }
 
-  const user = await User.findOne({ email: email });
+  const user = await User.findOne({ email: email }).select('+password');
+  console.log(user);
 
   if (
     !user ||
@@ -55,16 +50,7 @@ async function _login(req: Request, res: Response, next: NextFunction) {
   ) {
     next(new AppError('Incorrect email or password.', 401));
   } else {
-    const secret = process.env.SECRET;
-
-    if (secret === undefined) {
-      throw Error('Authentication secret missing.');
-    }
-
-    const payload = { id: user._id };
-    const authToken = jwt.sign(payload, secret, {
-      expiresIn: process.env.JWT_EXP,
-    });
+    const authToken = generateLoginToken(user._id);
 
     res.status(200).json({
       status: 'success',
@@ -79,6 +65,7 @@ export const login = catchAsync(_login);
 
 // Verify the user's login status,
 // before allowing the user to perform certain actions.
+// The verified user identity will be saved into the request object.
 async function _verifyLoginStatus(
   req: Request,
   _res: Response,
@@ -128,7 +115,7 @@ async function _verifyLoginStatus(
     );
   }
 
-  req.body.reqUser = user;
+  req.body.reqUserId = user._id;
   next();
 }
 
@@ -241,16 +228,7 @@ async function _resetPassword(req: Request, res: Response, next: NextFunction) {
   await user.save();
 
   // Generate a new token to be used to verify the user's login status.
-  const secret = process.env.SECRET;
-
-  if (secret === undefined) {
-    throw Error('Authentication secret missing.');
-  }
-
-  const payload = { id: user._id };
-  const authToken = jwt.sign(payload, secret, {
-    expiresIn: process.env.JWT_EXP,
-  });
+  const authToken = generateLoginToken(user._id);
 
   res.status(200).json({
     status: 'success',
@@ -262,3 +240,61 @@ async function _resetPassword(req: Request, res: Response, next: NextFunction) {
 }
 
 export const resetPassword = catchAsync(_resetPassword);
+
+// For logged in user to change/update their password.
+// The request body should contain the user's current password, and the new password.
+// And the request header should contain a login JWT.
+// The user's login status will be verified, before allowing the user to update the password.
+async function _updatePassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const user = await User.findById(req.body.reqUserId).select('+password');
+
+  if (!user) {
+    return next(new AppError("Cannot find the user's profile", 404));
+  }
+
+  if (!user.password) {
+    return next(
+      new AppError('Database connection failed. Try again later.', 500)
+    );
+  }
+
+  if (!bcrypt.compare(req.body.currentPassword, user.password)) {
+    return next(new AppError('Your current password is wrong.', 401));
+  }
+
+  // The password and passwordConfirm in the request body are unencrypted.
+  // They are assigned to the user
+  // And will be encrypted by the pre save meddleware defined on the User schema when .save() is called.
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+
+  await user.save();
+
+  const token = generateLoginToken(user['_id']);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password updated',
+    data: {
+      token: token,
+    },
+  });
+}
+
+export const updatePassword = catchAsync(_updatePassword);
+
+function generateLoginToken(userId: mongoose.Types.ObjectId) {
+  const secret: jwt.Secret | undefined = process.env.SECRET;
+
+  if (secret === undefined) {
+    throw Error('Authentication secret missing.');
+  }
+
+  const payload = { id: userId };
+  const token = jwt.sign(payload, secret, { expiresIn: process.env.JWT_EXP });
+  return token;
+}

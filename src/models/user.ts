@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please create a password'],
     minLength: 8,
+    select: false,
   },
   passwordConfirm: {
     type: String,
@@ -49,6 +50,11 @@ const userSchema = new mongoose.Schema({
     select: false,
   },
   resetTokenGenerateTime: Number,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 userSchema.pre('save', async function (next) {
@@ -68,6 +74,16 @@ userSchema.pre('save', async function (next) {
   // Data validation has already been done - the two passwords are the same.
   // Thus, it's safe to get rid of the passwordConfirm field.
   this.passwordConfirm = undefined;
+  next();
+});
+
+// Query middlewares
+userSchema.pre(/^find/, function (next) {
+  (this as any).find({
+    active: {
+      $ne: false,
+    },
+  });
   next();
 });
 
