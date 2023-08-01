@@ -28,9 +28,9 @@ export default class APIFeaturesGET {
     if (this.queryObj.sort) {
       let sortBy: string | string[] = '';
       if (typeof this.queryObj.sort === 'string') {
-        sortBy = this.queryObj.sort as string;
+        sortBy = this.queryObj.sort;
       } else if (typeof this.queryObj.sort === 'object') {
-        const queryArr = this.queryObj.sort as Array<string>;
+        const queryArr = this.queryObj.sort as string[];
         sortBy = queryArr.join(' ');
       }
 

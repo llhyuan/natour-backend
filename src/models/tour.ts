@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 
 const tourSchema = new mongoose.Schema(
   {
-    id: { type: String, required: true, unique: true },
+    _id: { type: String, required: true, unique: true },
     name: {
       type: String,
       required: [true, 'A tour must have a name'],
@@ -30,7 +30,7 @@ const tourSchema = new mongoose.Schema(
     maxGroupSize: {
       type: Number,
       required: [true, 'A tour must have a group size'],
-      max: [15, 'The maximun group size is 15'],
+      max: [50, 'The maximun group size is 15'],
     },
     difficulty: {
       type: String,
@@ -64,13 +64,13 @@ const tourSchema = new mongoose.Schema(
     summary: {
       type: String,
       trim: true,
-      maxLength: [100, 'The summary should be within 100  characters.'],
+      maxLength: [1000, 'The summary should be within 100  characters.'],
     },
     description: {
       type: String,
       required: [true, 'Give your tour a description'],
       trim: true,
-      maxLength: [500, 'The description should be within 500 characters'],
+      maxLength: [2000, 'The description should be within 500 characters'],
     },
     imageCover: {
       type: String,
@@ -82,6 +82,30 @@ const tourSchema = new mongoose.Schema(
       default: Date.now(),
       select: false,
     },
+    // To embed documents,
+    // simply embed child doc schema into a parent field as follows:
+    startLocation: {
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },

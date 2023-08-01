@@ -1,17 +1,21 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const fs = require('fs');
-const Tour = require('../../models/tourjs');
+import Tour from '../../models/tour';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import fs from 'fs';
 
 // Path can be left out if the config file is at the root level of the project.
 dotenv.config({ path: './config.env' });
-const uri = process.env.DB_CONN_STRING ? process.env.DB_CONN_STRING : '';
+const uri: string = process.env.DB_CONN_STRING
+  ? process.env.DB_CONN_STRING
+  : '';
 
 mongoose.connect(uri).then(() => {
   console.log('connected to the database.');
 });
 
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`, 'utf-8'));
+const tours: JSON = JSON.parse(
+  fs.readFileSync(`${__dirname}/tours.json`, 'utf-8')
+);
 console.log(tours);
 
 // import data
