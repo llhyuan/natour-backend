@@ -34,8 +34,6 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
-reviewSchema.index({ tour: 1, user: 1 }, { unique: true });
-
 reviewSchema.post('save', async function () {
   await _calcAvgRating((this as any).tour);
 });

@@ -228,3 +228,48 @@ async function _getMonthlyData(
 }
 
 export const getMonthlyData = catchAsync(_getMonthlyData);
+
+async function _getToursNearby(
+  req: TourRequest,
+  res: Response,
+  next: NextFunction
+) {
+  // The query parameters are provide as follows:
+  // /tours-nearby/:distance/center/:cordinates/unit/:unit
+  // 1, distance is of type number, denoted by the provided unit
+  // 2, cordinates are to numbers representing longitude and latitude, seperated by a comma
+  //    for example: -23.344,54.363
+  // 3, unit is either 'mi' or 'km'
+  const distance = parseFloat(req.params.distance);
+  const unit = req.params.unit;
+  const [latitude, longitude] = req.params.cordinates.split(',');
+
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+
+  if (!latitude || !longitude) {
+    return next(
+      new AppError(
+        `Cannot parse the cordinates format. The correct format is 'latitude,longitude', while the provided cordinates are '${req.params.cordinates}'`,
+        400
+      )
+    );
+  }
+
+  const tours = await Tour.find({
+    startLocation: {
+      $geoWithin: {
+        $centerSphere: [[longitude, latitude], radius],
+      },
+    },
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      count: tours.length,
+      tours: tours,
+    },
+  });
+}
+
+export const getToursNearby = catchAsync(_getToursNearby);

@@ -11,11 +11,20 @@ async function _createReview(
   res: Response,
   next: NextFunction
 ) {
+  // One user can only post one review for the same tour.
+  const existReview = await Review.findOne({ user: req.body.reqUserId });
+  if (existReview) {
+    return next(
+      new AppError('Each user can only post one review for the same tour.', 500)
+    );
+  }
+
   // Only logged in user can post reviews
   // At thie point, the user's id will have been verified by middleware
   // and stored in req.body.reqUserId
   req.body.user = req.body.reqUserId;
   req.body.tour = req.body.tour;
+
   const newReview = await Review.create(req.body);
 
   if (!newReview) {
