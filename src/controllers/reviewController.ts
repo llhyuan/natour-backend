@@ -1,8 +1,8 @@
 import { TourRequest, AppError } from '../models/customTypes';
 import Review from '../models/review';
+import Tour from '../models/tour';
 import { Response, NextFunction } from 'express-serve-static-core';
 import catchAsync from '../utils/catchAsync';
-import { deleteByIdHandlerFactory } from './handlerFactory';
 import APIFeaturesGET from '../utils/apiFeaturesGET';
 import mongoose from 'mongoose';
 
@@ -60,7 +60,70 @@ async function _getAllReviews(
 
 export const getAllReviews = catchAsync(_getAllReviews);
 
-export const deleteReview = deleteByIdHandlerFactory(Review);
+async function _deleteReview(
+  req: TourRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const reviewId = req.params.id;
+  console.log(reviewId);
+
+  const reviewToBeUpdated = await Review.findById(reviewId);
+  console.log(reviewToBeUpdated);
+
+  if (!reviewToBeUpdated) {
+    return next(
+      new AppError('No review matching the provided review ID.', 404)
+    );
+  }
+
+  if (String(reviewToBeUpdated.user) !== String(req.body.reqUserId)) {
+    return next(new AppError('Users can only delete their own reviews.', 500));
+  }
+
+  await Review.findByIdAndDelete(reviewId);
+
+  res.status(200).json({
+    status: 'success',
+    data: null,
+  });
+}
+export const deleteReview = catchAsync(_deleteReview);
+
+async function _updateReview(
+  req: TourRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const reviewId = req.params.id;
+  console.log(reviewId);
+
+  const reviewToBeUpdated = await Review.findById(reviewId);
+  console.log(reviewToBeUpdated);
+
+  if (!reviewToBeUpdated) {
+    return next(
+      new AppError('No review matching the provided review ID.', 404)
+    );
+  }
+
+  if (String(reviewToBeUpdated.user) !== String(req.body.reqUserId)) {
+    return next(new AppError('Users can only update their own reviews.', 500));
+  }
+
+  const updatedReview = await Review.findByIdAndUpdate(reviewId, req.body, {
+    new: true,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      review: updatedReview,
+    },
+  });
+}
+
+export const updatedReview = catchAsync(_updateReview);
 
 export async function _calcAvgRating(tourId: mongoose.Types.ObjectId) {
   const result = await Review.aggregate([
@@ -77,5 +140,16 @@ export async function _calcAvgRating(tourId: mongoose.Types.ObjectId) {
       },
     },
   ]);
-  console.log(result);
+
+  if (result.length > 0) {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsQuantity: result[0]['numRatings'],
+      ratingsAverage: result[0]['avgRating'],
+    });
+  } else {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsQuantity: 0,
+      ratingsAverage: 0,
+    });
+  }
 }

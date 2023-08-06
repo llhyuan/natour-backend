@@ -34,8 +34,24 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
+reviewSchema.index({ tour: 1, user: 1 }, { unique: true });
+
 reviewSchema.post('save', async function () {
   await _calcAvgRating((this as any).tour);
+});
+
+reviewSchema.pre(/^findOneAnd/, async function (next) {
+  const query = (this as any).clone();
+  const reviewInQuestion = await query.findOne();
+  (this as any).tourId = reviewInQuestion.tour;
+  next();
+});
+
+reviewSchema.post(/^findOneAnd/, async function () {
+  const tourId = (this as any).tourId;
+  if (tourId) {
+    await _calcAvgRating(tourId);
+  }
 });
 
 // reviewSchema.pre(/^find/, function (next) {

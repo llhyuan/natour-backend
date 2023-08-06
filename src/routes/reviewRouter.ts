@@ -6,21 +6,25 @@ import {
   createReview,
   deleteReview,
   getAllReviews,
+  updatedReview,
 } from '../controllers/reviewController';
 
 const express = require('express');
 const reviewRouter = express.Router({ mergeParams: true });
 
+reviewRouter.use(verifyLoginStatus);
+
 reviewRouter
   .route('/new-review')
-  .post(verifyLoginStatus, restrictUserRoleTo('user'), createReview);
+  .post(restrictUserRoleTo('user'), createReview);
 reviewRouter
   .route('/')
-  .get(verifyLoginStatus, restrictUserRoleTo('admin', 'user'), getAllReviews)
-  .delete(verifyLoginStatus, restrictUserRoleTo('admin'), deleteReview);
+  .get(restrictUserRoleTo('admin', 'user'), getAllReviews)
+  .delete(restrictUserRoleTo('admin'), deleteReview);
 
 reviewRouter
   .route('/:id')
-  .delete(verifyLoginStatus, restrictUserRoleTo('user'), deleteReview);
+  .delete(restrictUserRoleTo('user'), deleteReview)
+  .patch(restrictUserRoleTo('user'), updatedReview);
 
 export default reviewRouter;
