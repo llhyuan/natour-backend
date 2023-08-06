@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 
 const tourSchema = new mongoose.Schema(
   {
-    _id: { type: String, required: true, unique: true },
+    //id: { type: String, required: true, unique: true },
     name: {
       type: String,
       required: [true, 'A tour must have a name'],
@@ -53,7 +53,7 @@ const tourSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'The quantity can be negtive'],
     },
-    startDates: { type: Array<string>, required: false, default: [] },
+    startDates: { type: Array<string>, wrequired: false, default: [] },
     price: { type: Number, required: [true, 'A tour must have a price'] },
     priceDiscount: {
       type: Number,
@@ -106,6 +106,13 @@ const tourSchema = new mongoose.Schema(
         description: String,
       },
     ],
+    guides: [
+      {
+        type: mongoose.Types.ObjectId,
+        // ref is to specify which model to use to populate guides
+        ref: 'User',
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },
@@ -114,7 +121,23 @@ const tourSchema = new mongoose.Schema(
 );
 
 tourSchema.virtual('duration(week)').get(function () {
-  return this.duration / 7;
+  return Math.ceil(this.duration / 7);
+});
+
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
+});
+
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+
+tourSchema.pre(/^find/, function (next) {
+  (this as any).populate({
+    path: 'guides',
+    select: 'name email',
+  });
+  next();
 });
 
 const Tour = mongoose.model('Tour', tourSchema);

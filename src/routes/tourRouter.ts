@@ -12,17 +12,20 @@ import {
   verifyLoginStatus,
   restrictUserRoleTo,
 } from '../controllers/authController';
+import reviewRouter from './reviewRouter';
 
 const express = require('express');
 // Routers
 const tourRouter = express.Router();
+tourRouter.use('/:tourId/reviews', reviewRouter);
+tourRouter.use('/:tourId/reviews/new-review', reviewRouter);
 
 tourRouter.route('/top5').get(verifyLoginStatus, topFiveQuery, getAllTours);
 tourRouter.route('/tour-stats').get(verifyLoginStatus, getTourStats);
 tourRouter.route('/monthly-data/:year?').get(verifyLoginStatus, getMonthlyData);
 
 tourRouter
-  .route('/details/:id')
+  .route('/:id')
   .get(getTourById)
   .patch(
     verifyLoginStatus,
@@ -35,6 +38,13 @@ tourRouter
     deleteTour
   );
 
-tourRouter.route('/').get(getAllTours).post(createNewTour);
+tourRouter
+  .route('/')
+  .get(getAllTours)
+  .post(
+    verifyLoginStatus,
+    restrictUserRoleTo('admin', 'lead-guide'),
+    createNewTour
+  );
 
 export default tourRouter;

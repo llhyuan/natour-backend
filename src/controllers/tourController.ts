@@ -3,6 +3,8 @@ import Tour from '../models/tour';
 import APIFeaturesGET from '../utils/apiFeaturesGET';
 import { Response, NextFunction } from 'express-serve-static-core';
 import catchAsync from '../utils/catchAsync';
+import mongoose from 'mongoose';
+import { deleteByIdHandlerFactory } from './handlerFactory';
 
 async function _getAllTours(
   req: TourRequest,
@@ -16,7 +18,7 @@ async function _getAllTours(
 
   // execute the query
   const tours = await getFeatures.query;
-  res.status(200).send({
+  res.status(201).send({
     status: 'success',
     time: req.timeofRequest,
     result: tours?.length,
@@ -35,12 +37,12 @@ async function _getTourById(
 ) {
   const id = req.params.id;
 
-  const result = await Tour.findOne({ _id: id });
+  const result = await Tour.findById(id).populate('reviews');
 
-  if (!result) {
-    const err = new AppError('Cannot found the queried tour.', 404);
-    next(err);
-  }
+  // if (!result) {
+  //   const err = new AppError('Cannot found the queried tour.', 404);
+  //   next(err);
+  // }
 
   res.status(200).json({
     status: 'success',
@@ -117,7 +119,9 @@ async function _deleteTour(
   });
 }
 
-export const deleteTour = catchAsync(_deleteTour);
+//export const deleteTour = catchAsync(_deleteTour);
+
+export const deleteTour = deleteByIdHandlerFactory(Tour);
 
 export function topFiveQuery(
   req: TourRequest,

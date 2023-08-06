@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express-serve-static-core';
 import catchAsync from '../utils/catchAsync';
 import { AppError } from '../models/customTypes';
 import User from '../models/user';
+import { deleteByIdHandlerFactory } from './handlerFactory';
 
 export async function createUser(req, res) {
   res.status(500).json({
@@ -74,24 +75,12 @@ async function _deleteProfile(req: Request, res: Response, next: NextFunction) {
     return next(new AppError('The user in question does not exist', 404));
   }
 
-  res.status(200).json({});
+  res.status(204).json({});
 }
 
 export const deleteProfile = catchAsync(_deleteProfile);
 
-export async function updateUser(req, res) {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route has not been defined.',
-  });
-}
-
-export async function deleteUser(req, res) {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route has not been defined.',
-  });
-}
+export const deleteUser = deleteByIdHandlerFactory(User);
 
 function filterObj(obj: object, ...allowedFields: string[]) {
   let filteredObj: object = {};

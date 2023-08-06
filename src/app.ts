@@ -7,6 +7,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import { TourRequest, AppError } from './models/customTypes';
 import { Response, NextFunction } from 'express-serve-static-core';
 import errorHandler from './controllers/errorController';
+import reviewRouter from './routes/reviewRouter';
 
 const morgan = require('morgan');
 const express = require('express');
@@ -26,7 +27,7 @@ app.use(express.json({ limit: '10kb' }));
 
 // Sanitize user data
 // against: NoSQL query injection
-app.use(mongoSanitize());
+app.use(mongoSanitize({ allowDots: true }));
 
 // against: XXS
 const { xss } = require('express-xss-sanitizer');
@@ -52,6 +53,7 @@ app.use('/api', apiRateLimit);
 // Mounting API Routers
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 // Handle all other undefined routes
 app.all('*', (req: TourRequest, _res: Response, next: NextFunction) => {

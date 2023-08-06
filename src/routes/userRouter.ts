@@ -1,7 +1,6 @@
 import {
   getUser,
   getAllUsers,
-  updateUser,
   deleteUser,
   updateProfile,
   deleteProfile,
@@ -13,6 +12,7 @@ import {
   resetPassword,
   verifyLoginStatus,
   updatePassword,
+  restrictUserRoleTo,
 } from '../controllers/authController';
 
 const express = require('express');
@@ -24,11 +24,18 @@ userRouter.route('/login').post(login);
 
 userRouter.route('/forgot-password').post(forgotPassword);
 userRouter.route('/reset-password/:token').patch(resetPassword);
-userRouter.route('/update-password').patch(verifyLoginStatus, updatePassword);
-userRouter.route('/update-profile').patch(verifyLoginStatus, updateProfile);
-userRouter.route('/delete-profile').delete(verifyLoginStatus, deleteProfile);
 
-userRouter.route('/:id').get(getUser).patch(updateUser).delete(deleteUser);
+// Restrict the following routes to logged in users only.
+userRouter.use(verifyLoginStatus);
+
+userRouter.route('/update-password').patch(updatePassword);
+userRouter.route('/update-profile').patch(updateProfile);
+
+// Restrict the following routes to admins only.
+userRouter.use(restrictUserRoleTo('admin'));
+
+userRouter.route('/delete-user/:id').delete(deleteUser);
+
 userRouter.route('/').get(getAllUsers);
 
 export default userRouter;

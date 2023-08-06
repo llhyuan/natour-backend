@@ -136,6 +136,7 @@ async function _verifyLoginStatus(
   }
 
   req.body.reqUserId = user._id;
+  req.body.reqUserRole = user.role;
   next();
 }
 
@@ -144,7 +145,7 @@ export const verifyLoginStatus = catchAsync(_verifyLoginStatus);
 // Restrict a user's access, based on that user's role: 'user', 'admin', 'guide', ...
 export function restrictUserRoleTo(...roles: string[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
-    if (!roles.includes(req.body.reqUser.role)) {
+    if (!roles.includes(req.body.reqUserRole)) {
       return next(
         new AppError('You donnot have permission to perform this action.', 403)
       );

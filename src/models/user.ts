@@ -3,59 +3,65 @@ import validator from 'validator';
 import bcrypt from 'bcrypt';
 import { error } from 'console';
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'A user must have a name'],
-    maxLength: 40,
-  },
-  email: {
-    type: String,
-    required: [true, 'Place provide an email address'],
-    unique: true,
-    maxLength: 40,
-    validate: [validator.isEmail, 'Please provide a valid email address'],
-    lowercase: true,
-  },
-  photo: {
-    type: String,
-    maxLength: 100,
-  },
-  password: {
-    type: String,
-    required: [true, 'Please create a password'],
-    minLength: 8,
-    select: false,
-  },
-  passwordConfirm: {
-    type: String,
-    required: [true, 'Please confirm a password'],
-    minLength: 8,
-    validate: {
-      validator: function (el: string) {
-        return el === this['password'];
-      },
-      message: 'The two passwords do not match.',
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'A user must have a name'],
+      maxLength: 40,
     },
-    select: false,
+    email: {
+      type: String,
+      required: [true, 'Place provide an email address'],
+      unique: true,
+      maxLength: 40,
+      validate: [validator.isEmail, 'Please provide a valid email address'],
+      lowercase: true,
+    },
+    photo: {
+      type: String,
+      maxLength: 100,
+    },
+    password: {
+      type: String,
+      required: [true, 'Please create a password'],
+      minLength: 8,
+      select: false,
+    },
+    passwordConfirm: {
+      type: String,
+      required: [false, 'Please confirm a password'],
+      minLength: 8,
+      validate: {
+        validator: function (el: string) {
+          return el === this['password'];
+        },
+        message: 'The two passwords do not match.',
+      },
+      select: false,
+    },
+    passwordLastChanged: Date,
+    role: {
+      type: String,
+      enum: ['user', 'guide', 'lead-guide', 'admin'],
+      default: 'user',
+    },
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+    resetTokenGenerateTime: Number,
+    active: {
+      type: Boolean,
+      default: true,
+      select: false,
+    },
   },
-  passwordLastChanged: Date,
-  role: {
-    type: String,
-    enum: ['user', 'guide', 'lead-guide', 'admin'],
-    default: 'user',
-  },
-  passwordResetToken: {
-    type: String,
-    select: false,
-  },
-  resetTokenGenerateTime: Number,
-  active: {
-    type: Boolean,
-    default: true,
-    select: false,
-  },
-});
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
