@@ -6,6 +6,8 @@ export interface TourRequest extends Express.Request {
   timeofRequest: string;
 }
 
+export interface UserRequest extends TourRequest {}
+
 export class AppError extends Error {
   statusCode: number;
   status: string;

@@ -8,6 +8,7 @@ import {
   getTourStats,
   getMonthlyData,
   getToursNearby,
+  getDistancesToTours,
 } from '../controllers/tourController';
 import {
   verifyLoginStatus,
@@ -25,8 +26,9 @@ tourRouter.route('/top5').get(verifyLoginStatus, topFiveQuery, getAllTours);
 tourRouter.route('/tour-stats').get(verifyLoginStatus, getTourStats);
 tourRouter.route('/monthly-data/:year?').get(verifyLoginStatus, getMonthlyData);
 tourRouter
-  .route('/tours-nearby/:distance/center/:cordinates/unit/:unit')
+  .route('/tours-nearby/:distance/center/:coordinates/unit/:unit')
   .get(verifyLoginStatus, getToursNearby);
+tourRouter.route('/distances/:coordinates/unit/:unit').get(getDistancesToTours);
 
 tourRouter
   .route('/:id')

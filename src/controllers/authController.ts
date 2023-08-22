@@ -25,8 +25,10 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
 
   const token = generateLoginToken(newUser._id);
   const cookieOptions: CookieOptions = {
+    path: '/',
     httpOnly: true,
     maxAge: 10 * 24 * 60 * 60 * 1000,
+    sameSite: 'lax',
   };
 
   if (process.env.NODE_ENV !== 'development') {
@@ -71,17 +73,109 @@ async function _login(req: Request, res: Response, next: NextFunction) {
     next(new AppError('Incorrect email or password.', 401));
   } else {
     const authToken = generateLoginToken(user._id);
+    const cookieOptions: CookieOptions = {
+      path: '/',
+      httpOnly: true,
+      maxAge: 10 * 24 * 60 * 60 * 1000,
+      sameSite: 'none',
+    };
 
+    if (process.env.NODE_ENV !== 'development') {
+      cookieOptions.secure = true;
+    }
+
+    // Send the token using cookie
+    // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
+    // And will only be accessible by the web server (sercure option)
+    res.cookie('jwt', authToken, cookieOptions);
+
+    // Send the token using cookie
+    // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
+    // And will only be accessible by the web server (sercure option)
     res.status(200).json({
       status: 'success',
       data: {
-        token: authToken,
+        loginToken: authToken,
+        loginStatus: true,
+        name: user.name,
+        photo: user.photo,
       },
     });
   }
 }
 
 export const login = catchAsync(_login);
+
+async function _logout(_req: Request, res: Response, _next: NextFunction) {
+  res.cookie('jwt', '', {
+    httpOnly: true,
+    expires: new Date(Date.now() + 10 * 1000),
+    sameSite: 'none',
+  });
+
+  // Send the token using cookie
+  // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
+  // And will only be accessible by the web server (sercure option)
+  res.status(200).json({
+    status: 'success',
+    message: 'Successfuly logged out.',
+  });
+}
+
+export const logout = catchAsync(_logout);
+
+async function _isLogin(req: Request, res: Response, _next: NextFunction) {
+  const secret = process.env.SECRET;
+
+  if (secret === undefined) {
+    throw Error('Authentication secret missing.');
+  }
+
+  let token: string = '';
+
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  } else if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    const authArr = req.headers.authorization.split(' ');
+    if (authArr.length > 1) {
+      token = authArr[1];
+    }
+  }
+
+  if (token !== '') {
+    const payload = jwt.verify(token, secret);
+
+    // Check if the user holding the token is still in the database
+    const user = await User.findById(payload['id']);
+
+    if (
+      user &&
+      user.passwordLastChanged &&
+      payload['iat'] &&
+      parseInt(user.passwordLastChanged.getTime() / 1000 + '') < payload['iat']
+    ) {
+      res.status(200).json({
+        status: 'success',
+        data: {
+          isLogin: true,
+        },
+      });
+      return;
+    }
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      isLogin: false,
+    },
+  });
+}
+
+export const isLogin = catchAsync(_isLogin);
 
 // Verify the user's login status,
 // before allowing the user to perform certain actions.
@@ -98,7 +192,9 @@ async function _verifyLoginStatus(
   }
 
   let token: string = '';
-  if (
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  } else if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
@@ -107,6 +203,8 @@ async function _verifyLoginStatus(
       token = authArr[1];
     }
   }
+
+  console.log(token);
   if (token === '') {
     return next(
       new AppError('You are not logged in. Please log in to get access.', 401)
@@ -121,7 +219,7 @@ async function _verifyLoginStatus(
   // Check if the user holding the token is still in the database
   const user = await User.findById(payload['id']);
   if (!user) {
-    return next(new AppError('The user does not exist.', 401));
+    return next(new AppError('The user does not exist.', 404));
   }
 
   // Check if the user has changed the password after the token was issued.
@@ -290,8 +388,8 @@ async function _updatePassword(
   // The password and passwordConfirm in the request body are unencrypted.
   // They are assigned to the user
   // And will be encrypted by the pre save meddleware defined on the User schema when .save() is called.
-  user.password = req.body.password;
-  user.passwordConfirm = req.body.passwordConfirm;
+  user.password = req.body.newPassword;
+  user.passwordConfirm = req.body.newPasswordConfirm;
 
   await user.save();
 

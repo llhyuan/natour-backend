@@ -8,14 +8,27 @@ import { TourRequest, AppError } from './models/customTypes';
 import { Response, NextFunction } from 'express-serve-static-core';
 import errorHandler from './controllers/errorController';
 import reviewRouter from './routes/reviewRouter';
+import cors, { CorsOptions } from 'cors';
+require('dotenv').config();
 
 const morgan = require('morgan');
 const express = require('express');
+const cookieParser = require('cookie-parser');
 // Create a express server
 const app = express();
 
+app.use(
+  cors({
+    origin: /http:\/\/localhost:3000\/*/,
+    credentials: true,
+  })
+);
+
 // Set security HTTP hdeaders
 app.use(helmet());
+
+// parsing the cookie in the request
+app.use(cookieParser());
 
 // Middlewares
 if (process.env.NODE_ENV === 'development') {
@@ -43,9 +56,10 @@ app.use((req: TourRequest, _res: Response, next: NextFunction) => {
 });
 
 // Middleware to limit the number of api requests from the same IP.
+const limit = parseInt(process.env.REQUEST_LIMIT ?? '300');
 const apiRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  max: limit, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
   message: 'Too many request from this IP address. Try again in an 15 minutes.',
 });
 app.use('/api', apiRateLimit);

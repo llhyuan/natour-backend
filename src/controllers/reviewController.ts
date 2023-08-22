@@ -50,8 +50,6 @@ async function _getAllReviews(
   if (req.params.tourId) {
     filter = { tour: req.params.tourId };
   }
-  console.log(filter);
-  console.log(req.query);
 
   const reviewQuery = new APIFeaturesGET(Review.find(filter), req.query);
 
