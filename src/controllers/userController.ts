@@ -15,13 +15,21 @@ export async function createUser(req, res) {
 
 async function _getUserById(req: UserRequest, res: Response) {
   const user = await User.find({ _id: req.params.id }, 'name role photo');
-
-  res.status(201).json({
-    status: 'success',
-    data: {
-      user: user,
-    },
-  });
+  if (user) {
+    res.status(201).json({
+      status: 'success',
+      data: {
+        user: user,
+      },
+    });
+  } else {
+    res.status(404).json({
+      status: 'fail',
+      data: {
+        user: [],
+      },
+    });
+  }
 }
 
 export const getUserById = catchAsync(_getUserById);
@@ -32,12 +40,16 @@ async function _getUserProfile(req: UserRequest, res: Response) {
 
   const user = await User.find({ _id: req.body.reqUserId });
 
-  res.status(201).json({
-    status: 'success',
-    data: {
-      user: user,
-    },
-  });
+  if (user) {
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: user,
+      },
+    });
+  } else {
+    res.status(200).json({ status: 'fail', message: 'User not found' });
+  }
 }
 
 export const getUserProfile = catchAsync(_getUserProfile);
@@ -77,7 +89,7 @@ async function _updateProfile(
 
   // The only fields allowed to be changed by the user at the moment are:
   // name, email
-  const updateObj = filterObj(req.body, 'name', 'email');
+  const updateObj = filterObj(req.body, 'name', 'email', 'photo');
 
   const user = await User.findByIdAndUpdate(req.body.reqUserId, updateObj, {
     new: true,
@@ -132,3 +144,8 @@ function filterObj(obj: object, ...allowedFields: string[]) {
   }
   return filteredObj;
 }
+
+async function _getUserId(req: UserRequest, res: Response) {
+  return res.status(200).json({ id: req.body.reqUserId });
+}
+export const getUserId = catchAsync(_getUserId);

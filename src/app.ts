@@ -1,6 +1,7 @@
 // Imports
 import tourRouter from './routes/tourRouter';
 import userRouter from './routes/userRouter';
+import bookingRouter from './routes/bookingRouter';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
@@ -68,6 +69,7 @@ app.use('/api', apiRateLimit);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/bookings', bookingRouter);
 
 // Handle all other undefined routes
 app.all('*', (req: TourRequest, _res: Response, next: NextFunction) => {

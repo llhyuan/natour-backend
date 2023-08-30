@@ -3,7 +3,6 @@ import Tour from '../models/tour';
 import APIFeaturesGET from '../utils/apiFeaturesGET';
 import { Response, NextFunction } from 'express-serve-static-core';
 import catchAsync from '../utils/catchAsync';
-import mongoose from 'mongoose';
 import { deleteByIdHandlerFactory } from './handlerFactory';
 
 async function _getAllTours(
@@ -11,8 +10,6 @@ async function _getAllTours(
   res: Response,
   _next: NextFunction
 ) {
-  console.log('from all tour route');
-  console.log(req.cookies);
   const getFeatures = new APIFeaturesGET(Tour.find(), req.query);
 
   // Build the query

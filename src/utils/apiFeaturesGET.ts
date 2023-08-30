@@ -15,10 +15,16 @@ export default class APIFeaturesGET {
   }
 
   find() {
-    const queryObj = { ...this.queryObj };
+    const queryObj: expressType.Query = { ...this.queryObj };
+    console.log(queryObj);
 
     const excludedField = ['page', 'sort', 'limit', 'fields'];
     excludedField.forEach((el) => delete queryObj[el]);
+
+    if (queryObj.name) {
+      queryObj.name = { $regex: queryObj.name, $options: 'i' };
+    }
+    console.log(queryObj);
 
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, '$$$&');

@@ -20,6 +20,7 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
+    photo: 'default.jpg',
     passwordLastChanged: new Date(),
   });
 
@@ -28,7 +29,7 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
     path: '/',
     httpOnly: true,
     maxAge: 10 * 24 * 60 * 60 * 1000,
-    sameSite: 'lax',
+    sameSite: 'none',
   };
 
   if (process.env.NODE_ENV !== 'development') {
@@ -46,8 +47,10 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
 
   res.status(201).json({
     status: 'success',
+    message: 'Your Account has been created.',
     data: {
-      user: newUser,
+      name: newUser.name,
+      photo: newUser.photo,
     },
   });
 }
@@ -94,9 +97,8 @@ async function _login(req: Request, res: Response, next: NextFunction) {
     // And will only be accessible by the web server (sercure option)
     res.status(200).json({
       status: 'success',
+      message: 'You have logged in successfuly.',
       data: {
-        loginToken: authToken,
-        loginStatus: true,
         name: user.name,
         photo: user.photo,
       },
@@ -204,7 +206,6 @@ async function _verifyLoginStatus(
     }
   }
 
-  console.log(token);
   if (token === '') {
     return next(
       new AppError('You are not logged in. Please log in to get access.', 401)
@@ -254,7 +255,7 @@ export function restrictUserRoleTo(...roles: string[]) {
 }
 
 // Send to token to the user to help recover forgotten password.
-async function _forgotPassword(
+async function _forgetPassword(
   req: Request,
   res: Response,
   next: NextFunction
@@ -280,9 +281,8 @@ async function _forgotPassword(
 
   // Create an url that includes this random token,
   // And send it to the user to reset the password.
-  const resetUrl = `${req.protocol}://${req.get(
-    'host'
-  )}/api/v1/users/reset-password/${resetToken}`;
+  const resetUrl = `${req.protocol}://localhost:3000/me/forget-password/${resetToken}`;
+  console.log(resetUrl);
 
   const emailTemplateParams = {
     user_name: user.name,
@@ -293,35 +293,40 @@ async function _forgotPassword(
   const pubkey = process.env.MAIL_PUBKEY ?? '';
   const prikey = process.env.MAIL_PRIKEY ?? '';
 
-  emailjs
-    .send('service_x8z98ne', 'reset_password', emailTemplateParams, {
-      publicKey: pubkey,
-      privateKey: prikey,
-    })
-    .then(
-      () => {
-        res.status(200).json({
-          status: 'success',
-          message: 'Password reset token sent.',
-        });
-      },
-      () => {
-        user.passwordResetToken = undefined;
-        user.passwordLastChanged = undefined;
-
-        user.save({ validateBeforeSave: false });
-
-        return next(
-          new AppError(
-            'There has been an error sending reset link to your email. Try again later.',
-            500
-          )
-        );
-      }
-    );
+  // emailjs
+  //   .send('service_x8z98ne', 'reset_password', emailTemplateParams, {
+  //     publicKey: pubkey,
+  //     privateKey: prikey,
+  //   })
+  //   .then(
+  //     () => {
+  //       res.status(200).json({
+  //         status: 'success',
+  //         message: 'Password reset link has been sent to your email.',
+  //       });
+  //     },
+  //     () => {
+  //       user.passwordResetToken = undefined;
+  //       user.passwordLastChanged = undefined;
+  //
+  //       user.save({ validateBeforeSave: false });
+  //
+  //       return next(
+  //         new AppError(
+  //           'There has been an error sending reset link to your email. Try again later.',
+  //           500
+  //         )
+  //       );
+  //     }
+  //   );
+  res.status(200).json({
+    status: 'token sent',
+    message: 'reset link sent.',
+    resetUrl: resetUrl,
+  });
 }
 
-export const forgotPassword = catchAsync(_forgotPassword);
+export const forgetPassword = catchAsync(_forgetPassword);
 
 // Reset the user's password.
 async function _resetPassword(req: Request, res: Response, next: NextFunction) {
@@ -332,29 +337,43 @@ async function _resetPassword(req: Request, res: Response, next: NextFunction) {
   const user = await User.findOne({
     passwordResetToken: resetToken,
     resetTokenGenerateTime: { $gt: Date.now() },
-  });
+  }).select('+password');
+  console.log(user);
 
   if (!user) {
     return next(new AppError('The link is invalid or has expired.', 500));
   }
 
-  user.password = req.body.password;
-  user.passwordConfirm = req.body.passwordConfirm;
+  user.password = req.body.newPassword;
+  user.passwordConfirm = req.body.newPasswordConfirm;
   user.resetTokenGenerateTime = undefined;
   user.passwordResetToken = undefined;
   user.passwordLastChanged = new Date();
+  console.log(user);
 
   await user.save();
 
   // Generate a new token to be used to verify the user's login status.
   const authToken = generateLoginToken(user._id);
+  const cookieOptions: CookieOptions = {
+    path: '/',
+    httpOnly: true,
+    maxAge: 10 * 24 * 60 * 60 * 1000,
+    sameSite: 'none',
+  };
+
+  if (process.env.NODE_ENV !== 'development') {
+    cookieOptions.secure = true;
+  }
+
+  // Send the token using cookie
+  // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
+  // And will only be accessible by the web server (sercure option)
+  res.cookie('jwt', authToken, cookieOptions);
 
   res.status(200).json({
     status: 'success',
     message: 'Password has been updated.',
-    data: {
-      token: authToken,
-    },
   });
 }
 
@@ -381,7 +400,7 @@ async function _updatePassword(
     );
   }
 
-  if (!bcrypt.compare(req.body.currentPassword, user.password)) {
+  if (!(await bcrypt.compare(req.body.currentPassword, user.password))) {
     return next(new AppError('Your current password is wrong.', 401));
   }
 
@@ -394,13 +413,25 @@ async function _updatePassword(
   await user.save();
 
   const token = generateLoginToken(user['_id']);
+  const cookieOptions: CookieOptions = {
+    path: '/',
+    httpOnly: true,
+    maxAge: 10 * 24 * 60 * 60 * 1000,
+    sameSite: 'none',
+  };
+
+  if (process.env.NODE_ENV !== 'development') {
+    cookieOptions.secure = true;
+  }
+
+  // Send the token using cookie
+  // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
+  // And will only be accessible by the web server (sercure option)
+  res.cookie('jwt', token, cookieOptions);
 
   res.status(200).json({
     status: 'success',
     message: 'Password updated',
-    data: {
-      token: token,
-    },
   });
 }
 

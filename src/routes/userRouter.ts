@@ -1,5 +1,6 @@
 import {
   getUserById,
+  getUserId,
   getAllUsers,
   deleteUser,
   updateProfile,
@@ -9,7 +10,7 @@ import {
 import {
   signup,
   login,
-  forgotPassword,
+  forgetPassword,
   resetPassword,
   verifyLoginStatus,
   updatePassword,
@@ -23,10 +24,12 @@ const userRouter = express.Router();
 
 userRouter.post('/signup', signup);
 
+userRouter.get('/fetchId', verifyLoginStatus, getUserId);
+
 userRouter.route('/login').post(login).get(isLogin);
 userRouter.route('/logout').get(logout);
 
-userRouter.route('/forgot-password').post(forgotPassword);
+userRouter.route('/forget-password').post(forgetPassword);
 userRouter.route('/reset-password/:token').patch(resetPassword);
 
 // Restrict the following routes to logged in users only.
