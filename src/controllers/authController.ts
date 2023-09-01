@@ -282,7 +282,6 @@ async function _forgetPassword(
   // Create an url that includes this random token,
   // And send it to the user to reset the password.
   const resetUrl = `${req.protocol}://localhost:3000/me/forget-password/${resetToken}`;
-  console.log(resetUrl);
 
   const emailTemplateParams = {
     user_name: user.name,
@@ -338,7 +337,6 @@ async function _resetPassword(req: Request, res: Response, next: NextFunction) {
     passwordResetToken: resetToken,
     resetTokenGenerateTime: { $gt: Date.now() },
   }).select('+password');
-  console.log(user);
 
   if (!user) {
     return next(new AppError('The link is invalid or has expired.', 500));
@@ -349,7 +347,6 @@ async function _resetPassword(req: Request, res: Response, next: NextFunction) {
   user.resetTokenGenerateTime = undefined;
   user.passwordResetToken = undefined;
   user.passwordLastChanged = new Date();
-  console.log(user);
 
   await user.save();
 

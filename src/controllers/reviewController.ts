@@ -73,10 +73,8 @@ async function _deleteReview(
   next: NextFunction
 ) {
   const reviewId = req.params.id;
-  console.log(reviewId);
 
   const reviewToBeUpdated = await Review.findById(reviewId);
-  console.log(reviewToBeUpdated);
 
   if (!reviewToBeUpdated) {
     return next(
@@ -103,10 +101,8 @@ async function _updateReview(
   next: NextFunction
 ) {
   const reviewId = req.params.id;
-  console.log(reviewId);
 
   const reviewToBeUpdated = await Review.findById(reviewId);
-  console.log(reviewToBeUpdated);
 
   if (!reviewToBeUpdated) {
     return next(

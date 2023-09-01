@@ -17,6 +17,7 @@ async function _getCheckoutSession(
 ) {
   const tourId = req.params.tourId;
   const customerId = req.body.reqUserId;
+  const orderId = String(Date.now());
 
   // Fetch the tour in question
   const tour = await Tour.findById(tourId);
@@ -35,26 +36,32 @@ async function _getCheckoutSession(
               description: tour.summary,
               images: [tour.imageCover + ''],
             },
-            unit_amount_decimal: String(tour.price),
+            unit_amount_decimal: String((tour.price ?? 0) * 100),
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.FRONTEND_HOST}?success=true`,
-      cancel_url: `${process.env.FRONTEND_HOST}?canceled=true`,
+      success_url: `${process.env.FRONTEND_HOST}/tours/?success=true`,
+      cancel_url: `${process.env.FRONTEND_HOST}/tours/${tourId}?canceled=true`,
+      metadata: {
+        order: orderId,
+        jwt: req.cookies.jwt,
+      },
     });
 
     if (session.url) {
       await Booking.create({
         tour: tour.id,
         user: user.id,
-        paymentStatus: 'processing',
+        order: orderId,
+        paymentStatus: 'pending',
+        url: session.url,
       });
       return res.status(200).json({ status: 'success', url: session.url });
     }
   }
-  res.status(200).json({
+  return res.status(200).json({
     status: 'fail',
     message: 'Something went wrong. try again later.',
   });
@@ -68,3 +75,33 @@ async function _getBookings(req: Request, res: Response) {
 }
 
 export const getBookings = catchAsync(_getBookings);
+
+async function _updateBooking(req: Request, res: Response) {
+  const booking = await Booking.findOneAndUpdate(
+    { order: req.body.order },
+    { paymentStatus: req.body.payment_status },
+    { new: true }
+  );
+
+  return res.status(200).json({
+    status: 'success',
+    data: booking,
+  });
+}
+
+export const updateBooking = catchAsync(_updateBooking);
+
+async function _deleteBooking(req: Request, res: Response) {
+  const { bookingId } = req.params;
+
+  const booking = await Booking.findOneAndDelete({ order: bookingId });
+
+  return res.status(200).json({
+    status: 'success',
+    data: {
+      message: 'The booking has already been deleted.',
+    },
+  });
+}
+
+export const deleteBooking = catchAsync(_deleteBooking);

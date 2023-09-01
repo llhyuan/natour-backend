@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const bookingSchema = new mongoose.Schema({
+  order: {
+    type: String,
+    require: [true, 'An order mush have an unique identifier.'],
+  },
   tour: {
     type: mongoose.Types.ObjectId,
     ref: 'Tour',
@@ -21,8 +25,11 @@ const bookingSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['processing', 'success', 'rejected'],
+    enum: ['pending', 'success', 'rejected'],
     require: [true, 'A booking must have a status'],
+  },
+  url: {
+    type: String,
   },
 });
 

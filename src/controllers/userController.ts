@@ -35,9 +35,6 @@ async function _getUserById(req: UserRequest, res: Response) {
 export const getUserById = catchAsync(_getUserById);
 
 async function _getUserProfile(req: UserRequest, res: Response) {
-  console.log('from userprofile route');
-  console.log(req.body.reqUserId);
-
   const user = await User.find({ _id: req.body.reqUserId });
 
   if (user) {
