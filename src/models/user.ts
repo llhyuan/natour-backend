@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema(
       },
       select: false,
     },
-    passwordLastChanged: Date,
+    passwordLastChanged: { type: Date },
     role: {
       type: String,
       enum: ['user', 'guide', 'lead-guide', 'admin'],

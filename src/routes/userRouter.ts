@@ -4,7 +4,6 @@ import {
   getAllUsers,
   deleteUser,
   updateProfile,
-  deleteProfile,
   getUserProfile,
 } from '../controllers/userController';
 import {
@@ -18,6 +17,7 @@ import {
   isLogin,
   logout,
 } from '../controllers/authController';
+import { getReviewsByUser } from '../controllers/reviewController';
 
 const express = require('express');
 const userRouter = express.Router();
@@ -39,6 +39,7 @@ userRouter
   .route('/me/update-password')
   .patch(verifyLoginStatus, updatePassword);
 userRouter.route('/me/update-profile').patch(verifyLoginStatus, updateProfile);
+userRouter.route('/me/reviews').get(verifyLoginStatus, getReviewsByUser);
 
 // Restrict the following routes to admins only.
 

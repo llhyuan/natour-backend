@@ -31,14 +31,29 @@ const bookingSchema = new mongoose.Schema({
   url: {
     type: String,
   },
+  invoice: {
+    type: String,
+  },
+  startDate: {
+    type: String,
+  },
+  review: {
+    type: mongoose.Types.ObjectId,
+    ref: 'Review',
+  },
 });
 
 bookingSchema.pre(/^find/, function (next) {
-  (this as any).populate({
-    path: 'tour',
-    select:
-      'name summary price duration imageCover difficulty startLocation startDates',
-  });
+  (this as any)
+    .populate({
+      path: 'tour',
+      select:
+        'name summary price duration imageCover difficulty startLocation startDates',
+    })
+    .populate({
+      path: 'review',
+      select: 'rating',
+    });
   next();
 });
 

@@ -54,7 +54,7 @@ const tourSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'The quantity can be negtive'],
     },
-    startDates: { type: Array<string>, wrequired: false, default: [] },
+    startDates: { type: Array<string>, required: false, default: [] },
     price: { type: Number, required: [true, 'A tour must have a price'] },
     priceDiscount: {
       type: Number,

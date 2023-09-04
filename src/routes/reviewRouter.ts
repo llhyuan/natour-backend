@@ -5,7 +5,8 @@ import {
 import {
   createReview,
   deleteReview,
-  getAllReviews,
+  getReviewsByTour,
+  getReviewsByUser,
   updatedReview,
 } from '../controllers/reviewController';
 
@@ -17,11 +18,11 @@ reviewRouter
   .post(verifyLoginStatus, restrictUserRoleTo('user'), createReview);
 reviewRouter
   .route('/')
-  .get(getAllReviews)
+  .get(getReviewsByTour)
   .delete(verifyLoginStatus, restrictUserRoleTo('admin'), deleteReview);
 
 reviewRouter
-  .route('/:id')
+  .route('/:reviewId')
   .delete(verifyLoginStatus, restrictUserRoleTo('user'), deleteReview)
   .patch(verifyLoginStatus, restrictUserRoleTo('user'), updatedReview);
 

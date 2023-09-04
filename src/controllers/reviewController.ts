@@ -5,27 +5,47 @@ import { Response, NextFunction } from 'express-serve-static-core';
 import catchAsync from '../utils/catchAsync';
 import APIFeaturesGET from '../utils/apiFeaturesGET';
 import mongoose from 'mongoose';
+import Booking from '../models/Booking';
+import { updateTourRatings } from './tourController';
 
 async function _createReview(
   req: TourRequest,
   res: Response,
   next: NextFunction
 ) {
-  // One user can only post one review for the same tour.
-  const existReview = await Review.findOne({ user: req.body.reqUserId });
+  let createReview: object = {
+    review: req.body.review,
+    title: req.body.title,
+    rating: req.body.rating,
+    order: req.body.order,
+  };
+  // user can only post one review for the same order.
+  const verifyBooking = await Booking.findOne({ order: req.body.order });
+  if (!verifyBooking) {
+    return next(new AppError('User can only review booked tour', 500));
+  } else {
+    createReview['tour'] = verifyBooking.tour;
+    createReview['user'] = verifyBooking.user;
+  }
+
+  const existReview = await Review.findOneAndUpdate(
+    {
+      user: verifyBooking.user,
+      tour: verifyBooking.tour,
+      order: req.body.order,
+    },
+    createReview
+  );
   if (existReview) {
     return next(
-      new AppError('Each user can only post one review for the same tour.', 500)
+      new AppError(
+        'Each user can only post one review for the same order.',
+        500
+      )
     );
   }
 
-  // Only logged in user can post reviews
-  // At thie point, the user's id will have been verified by middleware
-  // and stored in req.body.reqUserId
-  req.body.user = req.body.reqUserId;
-  req.body.tour = req.body.tour;
-
-  const newReview = await Review.create(req.body);
+  const newReview = await Review.create(createReview);
 
   if (!newReview) {
     next(new AppError('Cannot create review. Try again later.', 500));
@@ -41,15 +61,17 @@ async function _createReview(
 
 export const createReview = catchAsync(_createReview);
 
-async function _getAllReviews(
+async function _getReviewsByTour(
   req: TourRequest,
   res: Response,
   _next: NextFunction
 ) {
   let filter = {};
   if (req.params.tourId) {
-    filter = { tour: req.params.tourId };
+    filter = { tour: req.params.tourId, review: { $exists: true } };
   }
+
+  req.query['sort'] = '-createdAt';
 
   const reviewQuery = new APIFeaturesGET(Review.find(filter), req.query);
 
@@ -65,7 +87,26 @@ async function _getAllReviews(
   });
 }
 
-export const getAllReviews = catchAsync(_getAllReviews);
+export const getReviewsByTour = catchAsync(_getReviewsByTour);
+
+async function _getReviewsByUser(
+  req: TourRequest,
+  res: Response,
+  _next: NextFunction
+) {
+  const userId = req.body.reqUserId;
+
+  const reviews = await Review.find({ user: userId });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      reviews: reviews,
+    },
+  });
+}
+
+export const getReviewsByUser = catchAsync(_getReviewsByUser);
 
 async function _deleteReview(
   req: TourRequest,
@@ -74,15 +115,15 @@ async function _deleteReview(
 ) {
   const reviewId = req.params.id;
 
-  const reviewToBeUpdated = await Review.findById(reviewId);
+  const reviewTobeDeleted = await Review.findById(reviewId);
 
-  if (!reviewToBeUpdated) {
+  if (!reviewTobeDeleted) {
     return next(
       new AppError('No review matching the provided review ID.', 404)
     );
   }
 
-  if (String(reviewToBeUpdated.user) !== String(req.body.reqUserId)) {
+  if (String(reviewTobeDeleted.user) !== String(req.body.reqUserId)) {
     return next(new AppError('Users can only delete their own reviews.', 500));
   }
 
@@ -100,7 +141,7 @@ async function _updateReview(
   res: Response,
   next: NextFunction
 ) {
-  const reviewId = req.params.id;
+  const reviewId = req.params.reviewId;
 
   const reviewToBeUpdated = await Review.findById(reviewId);
 
@@ -114,9 +155,22 @@ async function _updateReview(
     return next(new AppError('Users can only update their own reviews.', 500));
   }
 
-  const updatedReview = await Review.findByIdAndUpdate(reviewId, req.body, {
-    new: true,
-  });
+  const allowedEntries = ['review', 'rating', 'title'];
+  let filteredUpdateObj: { review?: string; rating?: number; title?: string } =
+    {};
+  for (const key of allowedEntries) {
+    if (req.body[key]) {
+      filteredUpdateObj[key] = req.body[key];
+    }
+  }
+
+  const updatedReview = await Review.findByIdAndUpdate(
+    reviewId,
+    filteredUpdateObj,
+    {
+      new: true,
+    }
+  );
 
   res.status(200).json({
     status: 'success',
@@ -128,7 +182,7 @@ async function _updateReview(
 
 export const updatedReview = catchAsync(_updateReview);
 
-export async function _calcAvgRating(tourId: mongoose.Types.ObjectId) {
+export async function _calcAvgRating(tourId: mongoose.Types.ObjectId | string) {
   const result = await Review.aggregate([
     {
       $match: {

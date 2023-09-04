@@ -1,9 +1,11 @@
 import { TourRequest, AppError } from '../models/customTypes';
 import Tour from '../models/tour';
+import Review from '../models/review';
 import APIFeaturesGET from '../utils/apiFeaturesGET';
 import { Response, NextFunction } from 'express-serve-static-core';
 import catchAsync from '../utils/catchAsync';
 import { deleteByIdHandlerFactory } from './handlerFactory';
+import { ObjectId } from 'mongoose';
 
 async function _getAllTours(
   req: TourRequest,
@@ -327,3 +329,12 @@ async function _getDistancesToTours(
 }
 
 export const getDistancesToTours = catchAsync(_getDistancesToTours);
+
+export async function updateTourRatings(tourId: ObjectId) {
+  try {
+    const reviewsByTour = await Review.find({ tour: tourId });
+    console.log(reviewsByTour);
+  } catch {
+    return;
+  }
+}

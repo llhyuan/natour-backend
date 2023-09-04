@@ -111,6 +111,7 @@ export const login = catchAsync(_login);
 async function _logout(_req: Request, res: Response, _next: NextFunction) {
   res.cookie('jwt', '', {
     httpOnly: true,
+    secure: true,
     expires: new Date(Date.now() + 10 * 1000),
     sameSite: 'none',
   });

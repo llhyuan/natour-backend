@@ -3,9 +3,13 @@ import { _calcAvgRating } from '../controllers/reviewController';
 
 const reviewSchema = new mongoose.Schema(
   {
+    title: {
+      type: String,
+      maxLength: [40, 'The name could not be more than 40 characters.'],
+    },
     review: {
       type: String,
-      require: [true, 'A review cannot be empty.'],
+      maxLength: [500, 'The name could not be more than 40 characters.'],
     },
     rating: {
       type: Number,
@@ -27,6 +31,10 @@ const reviewSchema = new mongoose.Schema(
       ref: 'User',
       require: [true, 'Please provide a user id for this review.'],
     },
+    order: {
+      type: String,
+      require: [true, 'A review must be related to an order.'],
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -34,15 +42,22 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
-reviewSchema.post('save', async function () {
-  await _calcAvgRating((this as any).tour);
-});
-
 reviewSchema.pre(/^findOneAnd/, async function (next) {
   const query = (this as any).clone();
   const reviewInQuestion = await query.findOne();
   (this as any).tourId = reviewInQuestion.tour;
   next();
+});
+
+reviewSchema.pre('find', function (next) {
+  (this as any).populate({
+    path: 'tour',
+    select: 'name imageCover',
+  });
+  next();
+});
+reviewSchema.post('save', async function () {
+  await _calcAvgRating((this as any).tour);
 });
 
 reviewSchema.post(/^findOneAnd/, async function () {
