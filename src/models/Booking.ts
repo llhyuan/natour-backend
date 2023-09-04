@@ -52,7 +52,7 @@ bookingSchema.pre(/^find/, function (next) {
     })
     .populate({
       path: 'review',
-      select: 'rating',
+      select: '_id rating',
     });
   next();
 });

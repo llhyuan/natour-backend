@@ -35,6 +35,10 @@ const reviewSchema = new mongoose.Schema(
       type: String,
       require: [true, 'A review must be related to an order.'],
     },
+    visible: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -67,19 +71,6 @@ reviewSchema.post(/^findOneAnd/, async function () {
   }
 });
 
-// reviewSchema.pre(/^find/, function (next) {
-//   (this as any)
-//     .populate({
-//       path: 'tour',
-//       select: 'name',
-//     })
-//     .populate({
-//       path: 'user',
-//       select: 'name photo',
-//     });
-//   next();
-// });
-//
 const Review = mongoose.model('Review', reviewSchema);
 
 export default Review;

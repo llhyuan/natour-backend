@@ -66,6 +66,7 @@ async function _getCheckoutSession(
         tour: tour.id,
         user: user.id,
         order: orderId,
+        visible: false,
       });
       await Booking.create({
         tour: tour.id,
@@ -142,6 +143,9 @@ async function _deleteBooking(req: Request, res: Response) {
   const { bookingId } = req.params;
 
   const booking = await Booking.findOneAndDelete({ order: bookingId });
+  if (booking && booking.review) {
+    await Review.findOneAndDelete({ _id: booking.review });
+  }
 
   return res.status(200).json({
     status: 'success',

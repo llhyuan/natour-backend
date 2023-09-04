@@ -6,7 +6,6 @@ import {
   createReview,
   deleteReview,
   getReviewsByTour,
-  getReviewsByUser,
   updatedReview,
 } from '../controllers/reviewController';
 

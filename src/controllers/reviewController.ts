@@ -96,7 +96,7 @@ async function _getReviewsByUser(
 ) {
   const userId = req.body.reqUserId;
 
-  const reviews = await Review.find({ user: userId });
+  const reviews = await Review.find({ user: userId, visible: true });
 
   res.status(200).json({
     status: 'success',
@@ -111,23 +111,17 @@ export const getReviewsByUser = catchAsync(_getReviewsByUser);
 async function _deleteReview(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   const reviewId = req.params.id;
 
-  const reviewTobeDeleted = await Review.findById(reviewId);
+  const updatedReview = await Review.findOneAndUpdate(
+    { _id: reviewId },
+    { visible: false, rating: 3, title: '', review: '' },
+    { new: true }
+  );
 
-  if (!reviewTobeDeleted) {
-    return next(
-      new AppError('No review matching the provided review ID.', 404)
-    );
-  }
-
-  if (String(reviewTobeDeleted.user) !== String(req.body.reqUserId)) {
-    return next(new AppError('Users can only delete their own reviews.', 500));
-  }
-
-  await Review.findByIdAndDelete(reviewId);
+  console.log(updatedReview);
 
   res.status(200).json({
     status: 'success',
@@ -156,12 +150,23 @@ async function _updateReview(
   }
 
   const allowedEntries = ['review', 'rating', 'title'];
-  let filteredUpdateObj: { review?: string; rating?: number; title?: string } =
-    {};
+  let filteredUpdateObj: {
+    review?: string;
+    rating?: number;
+    title?: string;
+    visible?: boolean;
+  } = { visible: true };
   for (const key of allowedEntries) {
     if (req.body[key]) {
       filteredUpdateObj[key] = req.body[key];
     }
+  }
+
+  if (!reviewToBeUpdated.visible) {
+    console.log('visible tweeked');
+    reviewToBeUpdated.visible = true;
+    reviewToBeUpdated.createdAt = new Date();
+    reviewToBeUpdated.save();
   }
 
   const updatedReview = await Review.findByIdAndUpdate(
@@ -187,6 +192,7 @@ export async function _calcAvgRating(tourId: mongoose.Types.ObjectId | string) {
     {
       $match: {
         tour: tourId,
+        visible: true,
       },
     },
     {
