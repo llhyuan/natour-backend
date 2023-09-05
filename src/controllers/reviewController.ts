@@ -113,7 +113,7 @@ async function _deleteReview(
   res: Response,
   _next: NextFunction
 ) {
-  const reviewId = req.params.id;
+  const reviewId = req.params.reviewId;
 
   const updatedReview = await Review.findOneAndUpdate(
     { _id: reviewId },
@@ -121,9 +121,7 @@ async function _deleteReview(
     { new: true }
   );
 
-  console.log(updatedReview);
-
-  res.status(200).json({
+  res.status(201).json({
     status: 'success',
     data: null,
   });
@@ -163,7 +161,6 @@ async function _updateReview(
   }
 
   if (!reviewToBeUpdated.visible) {
-    console.log('visible tweeked');
     reviewToBeUpdated.visible = true;
     reviewToBeUpdated.createdAt = new Date();
     reviewToBeUpdated.save();
