@@ -1,5 +1,5 @@
 import connectToDatabase from './src/services/database.service';
-import { Server } from 'http';
+import { createServer } from 'http';
 import app from './src/index';
 // import { createServer } from 'https';
 // import fs from 'fs';
@@ -20,15 +20,15 @@ async function run(): Promise<void> {
   // httpsServer.listen(PORT, () => {
   //   console.log(`Secure server started on port ${PORT}`);
   // });
+  server.listen(PORT, () => {
+    console.log(`Server is now listening on port ${PORT}`);
+  });
 }
 
+const PORT = process.env.PORT || 3000;
+const server = createServer(app);
 run().catch((err) => console.log(err));
 
-const PORT = process.env.PORT || 3000;
-
-const server: Server = app.listen(PORT, () => {
-  console.log(`Server is now listening on port ${PORT}`);
-});
 // const options = {
 //   key: fs.readFileSync(`${__dirname}/src/cert/key.pem`),
 //   cert: fs.readFileSync(`${__dirname}/src/cert/cert.pem`),
