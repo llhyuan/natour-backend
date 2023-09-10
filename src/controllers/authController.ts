@@ -282,7 +282,7 @@ async function _forgetPassword(
 
   // Create an url that includes this random token,
   // And send it to the user to reset the password.
-  const resetUrl = `${req.protocol}://localhost:3000/me/forget-password/${resetToken}`;
+  const resetUrl = `https://natours-llhyuan.vercel.app/me/forget-password/${resetToken}`;
 
   const emailTemplateParams = {
     user_name: user.name,
