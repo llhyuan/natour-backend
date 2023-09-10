@@ -28,7 +28,8 @@
     "mongoose": "^7.3.2",
     "morgan": "^1.10.0",
     "stripe": "^13.3.0",
-    "validator": "^13.9.0"
+    "validator": "^13.9.0",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
@@ -39,7 +40,6 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.4.1",
     "@types/validator": "^13.7.17",
-    "dotenv": "^16.3.1",
     "eslint": "^8.44.0",
     "mongodb": "^5.6.0",
     "nodemon": "^2.0.22",
