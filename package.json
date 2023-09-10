@@ -9,7 +9,7 @@
     "prestart": "pnpm run build",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon main.ts",
+    "dev": "nodemon index.ts",
     "prod": "NODE_ENV=production nodemon index.ts"
   },
   "keywords": [],

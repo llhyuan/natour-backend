@@ -1,6 +1,6 @@
 import connectToDatabase from './src/services/database.service';
-import app from './src/app';
 import { Server } from 'http';
+import app from './src/index';
 // import { createServer } from 'https';
 // import fs from 'fs';
 
