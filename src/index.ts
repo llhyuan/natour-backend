@@ -18,6 +18,8 @@ const cookieParser = require('cookie-parser');
 // Create a express server
 const app = express();
 
+app.set('trust proxy', true);
+
 app.use(
   cors({
     origin: /http*/,
