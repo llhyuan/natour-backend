@@ -293,37 +293,32 @@ async function _forgetPassword(
   const pubkey = process.env.MAIL_PUBKEY ?? '';
   const prikey = process.env.MAIL_PRIKEY ?? '';
 
-  // emailjs
-  //   .send('service_x8z98ne', 'reset_password', emailTemplateParams, {
-  //     publicKey: pubkey,
-  //     privateKey: prikey,
-  //   })
-  //   .then(
-  //     () => {
-  //       res.status(200).json({
-  //         status: 'success',
-  //         message: 'Password reset link has been sent to your email.',
-  //       });
-  //     },
-  //     () => {
-  //       user.passwordResetToken = undefined;
-  //       user.passwordLastChanged = undefined;
-  //
-  //       user.save({ validateBeforeSave: false });
-  //
-  //       return next(
-  //         new AppError(
-  //           'There has been an error sending reset link to your email. Try again later.',
-  //           500
-  //         )
-  //       );
-  //     }
-  //   );
-  res.status(200).json({
-    status: 'token sent',
-    message: 'reset link sent.',
-    resetUrl: resetUrl,
-  });
+  emailjs
+    .send('service_x8z98ne', 'reset_password', emailTemplateParams, {
+      publicKey: pubkey,
+      privateKey: prikey,
+    })
+    .then(
+      () => {
+        res.status(200).json({
+          status: 'success',
+          message: 'Password reset link has been sent to your email.',
+        });
+      },
+      () => {
+        user.passwordResetToken = undefined;
+        user.passwordLastChanged = undefined;
+
+        user.save({ validateBeforeSave: false });
+
+        return next(
+          new AppError(
+            'There has been an error sending reset link to your email. Try again later.',
+            500
+          )
+        );
+      }
+    );
 }
 
 export const forgetPassword = catchAsync(_forgetPassword);
