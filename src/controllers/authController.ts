@@ -43,7 +43,7 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
 
   // Hide these two fields from the user
   // .save() is not called, so these changes will not be committed to database.
-  newUser.password = undefined;
+  newUser.password = '';
 
   res.status(201).json({
     status: 'success',
