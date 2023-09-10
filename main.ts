@@ -17,6 +17,9 @@ process.on('uncaughtException', (err) => {
 async function run(): Promise<void> {
   // Connecting to the database
   await connectToDatabase();
+  httpsServer.listen(PORT, () => {
+    console.log(`Secure server started on port ${PORT}`);
+  });
 }
 
 run().catch((err) => console.log(err));
@@ -30,9 +33,9 @@ const options = {
 
 const httpsServer = createServer(options, app);
 
-httpsServer.listen(PORT, () => {
-  console.log(`Secure server started on port ${PORT}`);
-});
+// httpsServer.listen(PORT, () => {
+//   console.log(`Secure server started on port ${PORT}`);
+// });
 
 // const server: Server = app.listen(PORT, () => {
 //   console.log(`Server is now listening on port ${PORT}`);
