@@ -68,7 +68,7 @@ async function _getAllUsers(
     time: req.timeofRequest,
     result: users?.length,
     data: {
-      tours: users,
+      users: users,
     },
   });
 }

@@ -22,7 +22,7 @@ export default function ErrorHandle(
     if (err.name === 'ValidationError') {
       err = handleValidationError(err);
     }
-    if (err.name === 'JsonWebTokenError') {
+    if (err.name.includes('Token')) {
       err = handleInvalidTokenError();
     }
     sendProdError(err, res);
@@ -45,9 +45,9 @@ function sendProdError(err: AppError, res: Response) {
       message: err.message,
     });
   } else {
-    res.status(500).json({
+    res.status(404).json({
       status: 'Undefined error',
-      message: 'This error has not been properly handled.',
+      message: 'Something went wrong. Please try again later.',
     });
   }
 }
@@ -73,8 +73,5 @@ function handleValidationError(err: AppError) {
 }
 
 function handleInvalidTokenError() {
-  return new AppError(
-    'Login credentials not verified. Please login again to gain access.',
-    401
-  );
+  return new AppError('Please login again to gain access.', 401);
 }

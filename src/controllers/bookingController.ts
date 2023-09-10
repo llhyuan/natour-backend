@@ -149,9 +149,7 @@ async function _deleteBooking(req: Request, res: Response) {
 
   return res.status(200).json({
     status: 'success',
-    data: {
-      message: 'The booking has already been deleted.',
-    },
+    message: 'The booking has already been deleted.',
   });
 }
 
