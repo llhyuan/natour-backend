@@ -1,39 +1,50 @@
-import * as expressType from 'express-serve-static-core';
 import Tour from '../models/tour';
 import mongoose from 'mongoose';
 
 export default class APIFeaturesGET {
   query: mongoose.Query<any, typeof Tour, {}>;
-  queryObj: expressType.Query;
+  queryObj;
 
-  constructor(
-    query: mongoose.Query<any, typeof Tour, {}>,
-    queryObj: expressType.Query
-  ) {
+  constructor(query: mongoose.Query<any, typeof Tour, {}>, queryObj) {
     this.query = query;
     this.queryObj = queryObj;
   }
 
   find() {
-    const queryObj: expressType.Query = { ...this.queryObj };
+    let queryObj = { ...this.queryObj };
 
     const excludedField = ['page', 'sort', 'limit', 'fields'];
     excludedField.forEach((el) => delete queryObj[el]);
 
-    if (queryObj.name) {
-      queryObj.name = { $regex: queryObj.name, $options: 'i' };
-    }
-
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, '$$$&');
+    queryObj = JSON.parse(queryStr);
 
-    this.query = this.query.find(JSON.parse(queryStr));
+    if (queryObj.field === 'name') {
+      queryObj.name = { $regex: queryObj.value, $options: 'i' };
+    } else if (queryObj.field === 'size') {
+      const groupSize = parseInt(String(queryObj.value));
+      queryObj.maxGroupSize = { $lte: groupSize };
+    } else if (queryObj.field === 'duration') {
+      queryObj.duration = { $lte: queryObj.value };
+    }
+
+    if (queryObj.date) {
+      queryObj.startDates = { $elemMatch: { $gte: queryObj.date } };
+    }
+
+    delete queryObj.field;
+    delete queryObj.value;
+    delete queryObj.date;
+
+    this.query = this.query.find(queryObj);
+
     return this;
   }
 
   sort() {
     if (this.queryObj.sort) {
-      let sortBy: string | string[] = '';
+      let sortBy = '';
       if (typeof this.queryObj.sort === 'string') {
         sortBy = this.queryObj.sort;
       } else if (typeof this.queryObj.sort === 'object') {
