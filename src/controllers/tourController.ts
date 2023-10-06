@@ -332,8 +332,7 @@ export const getDistancesToTours = catchAsync(_getDistancesToTours);
 
 export async function updateTourRatings(tourId: ObjectId) {
   try {
-    const reviewsByTour = await Review.find({ tour: tourId });
-    console.log(reviewsByTour);
+    await Review.find({ tour: tourId });
   } catch {
     return;
   }
