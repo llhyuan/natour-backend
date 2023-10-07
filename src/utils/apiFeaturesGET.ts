@@ -33,9 +33,14 @@ export default class APIFeaturesGET {
       queryObj.startDates = { $elemMatch: { $gte: queryObj.date } };
     }
 
+    if (queryObj.budget && queryObj.budget !== 'undefined') {
+      queryObj.price = { $lte: parseInt(queryObj.budget) };
+    }
+
     delete queryObj.field;
     delete queryObj.value;
     delete queryObj.date;
+    delete queryObj.budget;
 
     this.query = this.query.find(queryObj);
 

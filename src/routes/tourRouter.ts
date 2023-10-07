@@ -9,6 +9,7 @@ import {
   getMonthlyData,
   getToursNearby,
   getDistancesToTours,
+  mostPopular,
 } from '../controllers/tourController';
 import {
   verifyLoginStatus,
@@ -22,7 +23,8 @@ const tourRouter = express.Router();
 tourRouter.use('/:tourId/reviews', reviewRouter);
 tourRouter.use('/:tourId/reviews/new-review', reviewRouter);
 
-tourRouter.route('/top5').get(verifyLoginStatus, topFiveQuery, getAllTours);
+tourRouter.route('/top5').get(topFiveQuery, getAllTours);
+tourRouter.route('/popular').get(mostPopular, getAllTours);
 tourRouter.route('/tour-stats').get(verifyLoginStatus, getTourStats);
 tourRouter.route('/monthly-data/:year?').get(verifyLoginStatus, getMonthlyData);
 tourRouter
@@ -36,12 +38,12 @@ tourRouter
   .patch(
     verifyLoginStatus,
     restrictUserRoleTo('admin', 'lead-guide'),
-    modifyTour
+    modifyTour,
   )
   .delete(
     verifyLoginStatus,
     restrictUserRoleTo('admin', 'lead-guide'),
-    deleteTour
+    deleteTour,
   );
 
 tourRouter
@@ -50,7 +52,7 @@ tourRouter
   .post(
     verifyLoginStatus,
     restrictUserRoleTo('admin', 'lead-guide'),
-    createNewTour
+    createNewTour,
   );
 
 export default tourRouter;
