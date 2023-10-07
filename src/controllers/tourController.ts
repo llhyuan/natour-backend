@@ -10,7 +10,7 @@ import { ObjectId } from 'mongoose';
 async function _getAllTours(
   req: TourRequest,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) {
   const getFeatures = new APIFeaturesGET(Tour.find(), req.query);
 
@@ -34,7 +34,7 @@ export const getAllTours = catchAsync(_getAllTours);
 async function _getTourById(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const id = req.params.id;
 
@@ -58,7 +58,7 @@ export const getTourById = catchAsync(_getTourById);
 async function _createNewTour(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const newTour = await Tour.create(req.body);
 
@@ -80,7 +80,7 @@ export const createNewTour = catchAsync(_createNewTour);
 async function _modifyTour(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const id = req.params.id;
 
@@ -107,7 +107,7 @@ export const modifyTour = catchAsync(_modifyTour);
 async function _deleteTour(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const id = req.params.id;
 
@@ -132,18 +132,23 @@ export const deleteTour = deleteByIdHandlerFactory(Tour);
 export function topFiveQuery(
   req: TourRequest,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   req.query.sort = ['price', '-ratingsAverage'];
-  req.query.fields = [
-    'name',
-    'duration',
-    'difficulty',
-    'ratingsAverage',
-    'price',
-  ];
   req.query.page = '1';
   req.query.limit = '5';
+
+  next();
+}
+
+export function mostPopular(
+  req: TourRequest,
+  _res: Response,
+  next: NextFunction,
+) {
+  req.query.sort = ['-ratingsAverage'];
+  req.query.page = '1';
+  req.query.limit = '3';
 
   next();
 }
@@ -151,7 +156,7 @@ export function topFiveQuery(
 async function _getTourStats(
   _req: TourRequest,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) {
   const stats = await Tour.aggregate([
     {
@@ -187,7 +192,7 @@ export const getTourStats = catchAsync(_getTourStats);
 async function _getMonthlyData(
   req: TourRequest,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) {
   let year: number = parseInt(req.params.year);
   if (isNaN(year)) {
@@ -238,7 +243,7 @@ export const getMonthlyData = catchAsync(_getMonthlyData);
 async function _getToursNearby(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   // The query parameters are provide as follows:
   // /tours-nearby/:distance/center/:coordinates/unit/:unit
@@ -256,8 +261,8 @@ async function _getToursNearby(
     return next(
       new AppError(
         `Cannot parse the coordinates format. The ocorrect format is 'latitude,longitude', while the provided coordinates are '${req.params.coordinates}'`,
-        400
-      )
+        400,
+      ),
     );
   }
 
@@ -283,7 +288,7 @@ export const getToursNearby = catchAsync(_getToursNearby);
 async function _getDistancesToTours(
   req: TourRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const { coordinates, unit } = req.params;
   const [latitude, longitude] = coordinates.split(',');
@@ -292,8 +297,8 @@ async function _getDistancesToTours(
     return next(
       new AppError(
         `Cannot parse the coordinates format. The ocorrect format is 'latitude,longitude', while the provided coordinates are '${req.params.coordinates}'`,
-        400
-      )
+        400,
+      ),
     );
   }
 
