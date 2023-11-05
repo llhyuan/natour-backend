@@ -38,6 +38,7 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
 
   // Send the token using cookie
   // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
+
   // And will only be accessible by the web server (sercure option)
   res.cookie('jwt', token, cookieOptions);
 
@@ -50,7 +51,7 @@ async function _signup(req: Request, res: Response, _next: NextFunction) {
     message: 'Your Account has been created.',
     data: {
       name: newUser.name,
-      photo: newUser.photo,
+      email: newUser.email,
     },
   });
 }
@@ -98,10 +99,6 @@ async function _login(req: Request, res: Response, next: NextFunction) {
     res.status(200).json({
       status: 'success',
       message: 'You have logged in successfuly.',
-      data: {
-        name: user.name,
-        photo: user.photo,
-      },
     });
   }
 }
@@ -138,14 +135,6 @@ async function _isLogin(req: Request, res: Response, _next: NextFunction) {
 
   if (req.cookies.jwt) {
     token = req.cookies.jwt;
-  } else if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    const authArr = req.headers.authorization.split(' ');
-    if (authArr.length > 1) {
-      token = authArr[1];
-    }
   }
 
   if (token !== '') {
@@ -186,7 +175,7 @@ export const isLogin = catchAsync(_isLogin);
 async function _verifyLoginStatus(
   req: Request,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const secret = process.env.SECRET;
 
@@ -209,7 +198,7 @@ async function _verifyLoginStatus(
 
   if (token === '') {
     return next(
-      new AppError('You are not logged in. Please log in to get access.', 401)
+      new AppError('You are not logged in. Please log in to get access.', 401),
     );
   }
 
@@ -231,7 +220,7 @@ async function _verifyLoginStatus(
     parseInt(user.passwordLastChanged.getTime() / 1000 + '') > payload['iat']
   ) {
     return next(
-      new AppError('The login session has expired. Please login again.', 401)
+      new AppError('The login session has expired. Please login again.', 401),
     );
   }
 
@@ -247,7 +236,7 @@ export function restrictUserRoleTo(...roles: string[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!roles.includes(req.body.reqUserRole)) {
       return next(
-        new AppError('You donnot have permission to perform this action.', 403)
+        new AppError('You donnot have permission to perform this action.', 403),
       );
     }
 
@@ -259,7 +248,7 @@ export function restrictUserRoleTo(...roles: string[]) {
 async function _forgetPassword(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const query: object = { email: req.body.email ?? 'empty@email.com' };
 
@@ -314,10 +303,10 @@ async function _forgetPassword(
         return next(
           new AppError(
             'There has been an error sending reset link to your email. Try again later.',
-            500
-          )
+            500,
+          ),
         );
-      }
+      },
     );
 }
 
@@ -379,7 +368,7 @@ export const resetPassword = catchAsync(_resetPassword);
 async function _updatePassword(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const user = await User.findById(req.body.reqUserId).select('+password');
 
@@ -389,7 +378,7 @@ async function _updatePassword(
 
   if (!user.password) {
     return next(
-      new AppError('Database connection failed. Try again later.', 500)
+      new AppError('Database connection failed. Try again later.', 500),
     );
   }
 
