@@ -27,6 +27,8 @@ export default class APIFeaturesGET {
       queryObj.maxGroupSize = { $lte: groupSize };
     } else if (queryObj.field === 'duration') {
       queryObj.duration = { $lte: queryObj.value };
+    } else if (queryObj.field === 'description') {
+      queryObj.description = { $regex: queryObj.value, $options: 'i' };
     }
 
     if (queryObj.date) {

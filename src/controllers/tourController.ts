@@ -179,6 +179,7 @@ async function _getTourStats(
       },
     },
   ]);
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -200,6 +201,9 @@ async function _getMonthlyData(
     year = thisYear.getFullYear();
   }
 
+  const startDate = new Date(`${year}-01-01`).toISOString();
+  const endDate = new Date(`${year}-12-31`).toISOString();
+
   const plan = await Tour.aggregate([
     {
       $unwind: '$startDates',
@@ -207,14 +211,20 @@ async function _getMonthlyData(
     {
       $match: {
         startDates: {
-          $gte: new Date(`${year}-01-01`),
-          $lte: new Date(`${year}-12-31`),
+          $gte: startDate,
+          $lte: endDate,
         },
       },
     },
     {
       $group: {
-        _id: { $month: '$startDates' },
+        _id: {
+          $month: {
+            $dateFromString: {
+              dateString: '$startDates',
+            },
+          },
+        },
         numTours: { $sum: 1 },
         tours: { $push: '$name' },
       },
@@ -228,6 +238,9 @@ async function _getMonthlyData(
       $project: {
         _id: 0,
       },
+    },
+    {
+      $sort: { month: 1 },
     },
   ]);
   res.status(200).json({
