@@ -19,7 +19,7 @@ The live site can be found [here](https://natours-llhyuan.vercel.app).
 
 - The backend server is built using TypeScript and Express.
 - Database used is MongoDB, connected using mongoose for better shcema definition and data validation.
-- Httponly cookie and JSON Web Token are combined to delivery safer user validation.
+- Httponly cookie and JSON Web Token are combined to deliver safer user validation.
 - Security features implemented to protect against brute force attack, xss attack, DOS and query injection attack.
 - Seamless payment processing with Stripe and webhooks.
 
