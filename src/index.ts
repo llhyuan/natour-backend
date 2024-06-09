@@ -22,7 +22,7 @@ app.use(
   cors({
     origin: /http*/,
     credentials: true,
-  })
+  }),
 );
 
 // Set security HTTP hdeaders
@@ -30,6 +30,8 @@ app.use(helmet());
 
 // parsing the cookie in the request
 app.use(cookieParser());
+
+app.set('trust proxy', true);
 
 // Middlewares
 if (process.env.NODE_ENV === 'development') {
@@ -75,7 +77,7 @@ app.use('/api/v1/bookings', bookingRouter);
 app.all('*', (req: TourRequest, _res: Response, next: NextFunction) => {
   const err = new AppError(
     `Cannot find the requested url: ${req.originalUrl}`,
-    404
+    404,
   );
 
   next(err);
