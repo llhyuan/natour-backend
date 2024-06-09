@@ -2,7 +2,7 @@
 import tourRouter from './routes/tourRouter';
 import userRouter from './routes/userRouter';
 import bookingRouter from './routes/bookingRouter';
-import rateLimit from 'express-rate-limit';
+//import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import { TourRequest, AppError } from './models/customTypes';
@@ -31,8 +31,6 @@ app.use(helmet());
 // parsing the cookie in the request
 app.use(cookieParser());
 
-app.set('trust proxy', true);
-
 // Middlewares
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -59,13 +57,13 @@ app.use((req: TourRequest, _res: Response, next: NextFunction) => {
 });
 
 // Middleware to limit the number of api requests from the same IP.
-const limit = parseInt(process.env.REQUEST_LIMIT ?? '300');
-const apiRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: limit, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  message: 'Too many request from this IP address. Try again in an 15 minutes.',
-});
-app.use('/api', apiRateLimit);
+//const limit = parseInt(process.env.REQUEST_LIMIT ?? '300');
+//const apiRateLimit = rateLimit({
+//  windowMs: 15 * 60 * 1000, // 15 minutes
+//  max: limit, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+//  message: 'Too many request from this IP address. Try again in an 15 minutes.',
+//});
+//app.use('/api', apiRateLimit);
 
 // Mounting API Routers
 app.use('/api/v1/tours', tourRouter);
