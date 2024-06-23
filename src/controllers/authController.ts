@@ -60,8 +60,8 @@ export const signup = catchAsync(_signup);
 
 // Log user in with the credentials provided by the user.
 async function _login(req: Request, res: Response, next: NextFunction) {
-  const email = req.body.email;
-  const password = req.body.password;
+  const { email } = req.body;
+  const { password } = req.body;
 
   if (email === undefined || password === undefined) {
     next(new AppError('Please provide email and password!', 400));
@@ -77,27 +77,13 @@ async function _login(req: Request, res: Response, next: NextFunction) {
     next(new AppError('Incorrect email or password.', 401));
   } else {
     const authToken = generateLoginToken(user._id);
-    const cookieOptions: CookieOptions = {
-      path: '/',
-      httpOnly: true,
-      maxAge: 10 * 24 * 60 * 60 * 1000,
-      sameSite: 'none',
-    };
-
-    if (process.env.NODE_ENV !== 'development') {
-      cookieOptions.secure = true;
-    }
-
-    // Send the token using cookie
-    // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
-    // And will only be accessible by the web server (sercure option)
-    res.cookie('jwt', authToken, cookieOptions);
 
     // Send the token using cookie
     // The cookie that bearing the token will only be sent using HTTPs (httpOnly option)
     // And will only be accessible by the web server (sercure option)
     res.status(200).json({
       status: 'success',
+      token: authToken,
       message: 'You have logged in successfuly.',
     });
   }

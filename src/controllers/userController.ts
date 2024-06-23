@@ -54,7 +54,7 @@ export const getUserProfile = catchAsync(_getUserProfile);
 async function _getAllUsers(
   req: UserRequest,
   res: Response,
-  next: NextFunction
+  _next: NextFunction,
 ) {
   const getFeatures = new APIFeaturesGET(User.find(), req.query);
 
@@ -78,7 +78,7 @@ export const getAllUsers = catchAsync(_getAllUsers);
 async function _updateProfile(
   req: UserRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   if (req.body.password || req.body.passwordConfirm) {
     return next(new AppError('This route is not for updating password.', 400));
@@ -95,7 +95,7 @@ async function _updateProfile(
 
   if (!user) {
     return next(
-      new AppError('Could not find the user profile. Try again later', 404)
+      new AppError('Could not find the user profile. Try again later', 404),
     );
   }
 
@@ -112,12 +112,12 @@ export const updateProfile = catchAsync(_updateProfile);
 async function _deleteProfile(
   req: UserRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const user = await User.findByIdAndUpdate(
     req.body.reqUserId,
     { active: false },
-    { new: true, select: '+active' }
+    { new: true, select: '+active' },
   );
 
   if (!user) {
@@ -132,7 +132,7 @@ export const deleteProfile = catchAsync(_deleteProfile);
 export const deleteUser = deleteByIdHandlerFactory(User);
 
 function filterObj(obj: object, ...allowedFields: string[]) {
-  let filteredObj: object = {};
+  const filteredObj: object = {};
 
   for (const field of allowedFields) {
     if (!!obj[field]) {
